@@ -1,2 +1,3 @@
-# generic-template
-My custom template for generic repositories
+# DALL·E mini Telegram bot
+
+A Telegram bot interface of DALL·E mini
