@@ -13,7 +13,10 @@ class Bot:
             token=self._settings.telegram_bot_token,
             parse_mode="HTML"
         )
-        setup_bot_handlers(self._bot)
+        setup_bot_handlers(
+            bot=self._bot,
+            dalle=self._dalle,
+        )
 
     def run(self):
         self._bot.infinity_polling()

@@ -1,3 +1,6 @@
+__all__ = ("BaseDalleException", "DalleTemporarilyUnavailableException", "DalleUnknownError")
+
+
 class BaseDalleException(Exception):
     pass
 

@@ -4,6 +4,8 @@ from .models import DalleResponse
 from .exceptions import DalleTemporarilyUnavailableException
 from ...settings import Settings
 
+__all__ = ("Dalle",)
+
 URL = "https://bf.dallemini.ai/generate"
 
 
@@ -11,9 +13,12 @@ class Dalle:
     def __init__(self, settings: Settings):
         self._settings = settings
 
-    def _simple_request(self, text: str):
+    def generate(self, prompt: str) -> DalleResponse:
+        return self._simple_request(prompt)
+
+    def _simple_request(self, prompt: str) -> DalleResponse:
         body = dict(
-            prompt=text
+            prompt=prompt
         )
         response = requests.post(
             url=URL,
@@ -23,7 +28,7 @@ class Dalle:
 
         return self._parse_response(
             response=response,
-            prompt=text,
+            prompt=prompt,
         )
 
     @staticmethod
