@@ -1,0 +1,36 @@
+name: Create PR on New Branch
+
+on:
+  create
+
+jobs:
+  CreatePullRequest:
+    name: Create Pull Request for new branch
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/heads/')
+    steps:
+      - name: Extract branch name
+        id: branch-name
+        shell: python
+        run: |-
+          ref = "${{ github.ref }}"
+          print("github.ref:", )
+          ref = ref.replace("refs/heads/", "")
+          print(f"::set-output name=name::{ref}")
+          print("branch name:", ref)
+      - name: Choose GitHub Token
+        id: github-token
+        shell: python
+        run: |-
+          ghtoken = "${{ secrets.GITHUB_TOKEN }}"
+          pat = "${{ secrets.PAT }}"
+          final = pat if pat else ghtoken
+          print(f"::set-output name=token::{final}")
+      - name: Create pull request
+        uses: thomaseizinger/create-pull-request@master
+        with:
+          GITHUB_TOKEN: ${{ steps.github-token.outputs.token }}
+          head: ${{ github.ref }}
+          base: main
+          title: ${{ steps.branch-name.outputs.name }}
+          draft: true

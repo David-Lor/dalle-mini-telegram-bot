@@ -1,0 +1,19 @@
+name: Update year in license file
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 3 1 1 *"  # January 1st, 3:00 AM
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Update year in license file
+      uses: FantasticFiasco/action-update-license-year@e4432857e61361d140b4b5b02ece051ebfaa195b
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        path: LICENSE.md
