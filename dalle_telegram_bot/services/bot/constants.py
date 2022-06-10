@@ -1,6 +1,6 @@
-BasicCommandsReplies = {
+BASIC_COMMAND_REPLIES = {
     "/start": "Hello there!",
     "/help": "Help me!"
 }
 
-CommandGenerate = "/generate"
+COMMAND_GENERATE = "/generate"

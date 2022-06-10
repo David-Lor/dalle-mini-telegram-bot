@@ -5,7 +5,7 @@ import telebot
 from telebot.types import Message, InputMediaPhoto
 
 from .chatactions import ActionManager
-from .constants import BasicCommandsReplies, CommandGenerate
+from .constants import BASIC_COMMAND_REPLIES, COMMAND_GENERATE
 from ..dalle import Dalle, DalleTemporarilyUnavailableException
 from ..dalle.models import DalleResponse
 from ...settings import Settings
@@ -23,7 +23,7 @@ class Bot:
         self._bot.message_handler(func=lambda message: True)(self._handler_message_entrypoint)
 
         self._typing_actions = ActionManager(
-            action="typing",
+            action=self._settings.command_generate_action,
             bot=self._bot,
             settings=self._settings,
         )
@@ -37,7 +37,7 @@ class Bot:
         self._handler_command_generate(message)
 
     def _handler_basic_command(self, message: Message) -> bool:
-        for cmd, reply_text in BasicCommandsReplies.items():
+        for cmd, reply_text in BASIC_COMMAND_REPLIES.items():
             if message.text.startswith(cmd):
                 self._bot.reply_to(
                     message=message,
@@ -47,10 +47,10 @@ class Bot:
         return False
 
     def _handler_command_generate(self, message: Message) -> bool:
-        if not message.text.startswith(CommandGenerate):
+        if not message.text.startswith(COMMAND_GENERATE):
             return False
 
-        prompt = message.text.replace(CommandGenerate, "").strip()
+        prompt = message.text.replace(COMMAND_GENERATE, "").strip()
         if len(prompt) < 2:
             # TODO Error message
             return True
