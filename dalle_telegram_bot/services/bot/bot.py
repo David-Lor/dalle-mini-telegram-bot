@@ -65,6 +65,7 @@ class Bot:
             return True
 
         if not self._dalle_generate_rate_limiter.increase(message.chat.id):
+            logger.bind(chat_id=message.chat.id).info("Generate command Request limit exceeded for this chat")
             self._bot.reply_to(message, constants.COMMAND_GENERATE_REPLY_RATELIMIT_EXCEEDED)
             return True
 
