@@ -3,9 +3,9 @@ from typing import Optional
 import telebot
 from telebot.types import Message, InputMediaPhoto
 
+from . import constants
 from .chatactions import ActionManager
 from .middlewares import request_middleware, message_request_middleware, RateLimiter
-from . import constants
 from ..dalle import Dalle, DalleTemporarilyUnavailableException
 from ..dalle.models import DalleResponse
 from ...settings import Settings
@@ -61,7 +61,7 @@ class Bot:
         logger.info("Request is Generate command")
         prompt = message.text.replace(constants.COMMAND_GENERATE, "").strip()
         if len(prompt) < 2:
-            # TODO Error message
+            self._bot.reply_to(message, constants.COMMAND_GENERATE_PROMPT_TOO_SHORT)
             return True
 
         if not self._dalle_generate_rate_limiter.increase(message.chat.id):
