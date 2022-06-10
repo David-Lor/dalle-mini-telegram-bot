@@ -6,8 +6,6 @@ from ...settings import Settings
 
 __all__ = ("Dalle",)
 
-URL = "https://bf.dallemini.ai/generate"
-
 
 class Dalle:
     def __init__(self, settings: Settings):
@@ -21,7 +19,7 @@ class Dalle:
             prompt=prompt
         )
         response = requests.post(
-            url=URL,
+            url=self._settings.dalle_api_url,
             json=body,
             timeout=1000  # TODO parametrize in settings
         )

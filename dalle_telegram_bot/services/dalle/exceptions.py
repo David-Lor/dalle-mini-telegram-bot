@@ -1,4 +1,4 @@
-__all__ = ("BaseDalleException", "DalleTemporarilyUnavailableException", "DalleUnknownError")
+__all__ = ("BaseDalleException", "DalleTemporarilyUnavailableException")
 
 
 class BaseDalleException(Exception):
@@ -6,8 +6,4 @@ class BaseDalleException(Exception):
 
 
 class DalleTemporarilyUnavailableException(BaseDalleException):
-    pass
-
-
-class DalleUnknownError(BaseDalleException):
     pass
