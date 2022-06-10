@@ -1,11 +1,10 @@
-from time import sleep
 from typing import Optional
 
 import telebot
 from telebot.types import Message, InputMediaPhoto
 
 from .chatactions import ActionManager
-from .middlewares import request_middleware, RateLimiter
+from .middlewares import request_middleware, message_request_middleware, RateLimiter
 from . import constants
 from ..dalle import Dalle, DalleTemporarilyUnavailableException
 from ..dalle.models import DalleResponse
@@ -39,9 +38,10 @@ class Bot:
 
     def _handler_message_entrypoint(self, message: Message):
         with request_middleware(chat_id=message.chat.id):
-            if self._handler_basic_command(message):
-                return
-            self._handler_command_generate(message)
+            with message_request_middleware(bot=self._bot, message=message):
+                if self._handler_basic_command(message):
+                    return
+                self._handler_command_generate(message)
 
     def _handler_basic_command(self, message: Message) -> bool:
         for cmd, reply_text in constants.BASIC_COMMAND_REPLIES.items():
@@ -68,29 +68,17 @@ class Bot:
             self._bot.reply_to(message, constants.COMMAND_GENERATE_REPLY_RATELIMIT_EXCEEDED)
             return True
 
-        # noinspection PyUnusedLocal
         response: Optional[DalleResponse] = None
-        exception = None
         self._generating_bot_action.start(message.chat.id)
 
-        while True:
-            try:
-                response = self._dalle.generate(
-                    prompt=prompt,
-                )
-            except DalleTemporarilyUnavailableException:
-                # TODO Check Max retries; move loop logic to Dalle service
-                sleep(5)
-            except Exception as ex:
-                self._bot.reply_to(message, constants.UNKNOWN_ERROR_REPLY)
-                exception = ex
-            else:
-                break
+        try:
+            response = self._dalle.generate(prompt)
+        except DalleTemporarilyUnavailableException:
+            pass
 
         self._generating_bot_action.stop(message.chat.id)
         if not response:
-            if exception:
-                raise exception
+            self._bot.reply_to(message, constants.COMMAND_GENERATE_REPLY_TEMPORARILY_UNAVAILABLE)
             return True
 
         images_telegram = [InputMediaPhoto(image_bytes) for image_bytes in response.images_bytes]

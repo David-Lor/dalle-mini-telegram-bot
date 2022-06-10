@@ -2,6 +2,10 @@ import contextlib
 from collections import Counter
 from threading import Lock
 
+import telebot
+from telebot.types import Message
+
+from . import constants
 from ...logger import logger
 from ...utils import get_uuid
 
@@ -17,6 +21,15 @@ def request_middleware(chat_id: int):
             logger.exception("Request failed", ex)
         else:
             logger.info("Request completed")
+
+
+@contextlib.contextmanager
+def message_request_middleware(bot: telebot.TeleBot, message: Message):
+    try:
+        yield
+    except Exception as ex:
+        bot.reply_to(message, constants.UNKNOWN_ERROR_REPLY)
+        raise ex
 
 
 class RateLimiter:
