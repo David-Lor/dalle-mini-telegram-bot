@@ -5,10 +5,12 @@ import telebot
 from telebot.types import Message, InputMediaPhoto
 
 from .chatactions import ActionManager
+from .middlewares import request_middleware
 from .constants import BASIC_COMMAND_REPLIES, COMMAND_GENERATE
 from ..dalle import Dalle, DalleTemporarilyUnavailableException
 from ..dalle.models import DalleResponse
 from ...settings import Settings
+from ...logger import logger
 
 
 class Bot:
@@ -29,14 +31,17 @@ class Bot:
         )
 
     def run(self):
+        logger.info("Running bot with Polling")
         self._bot.infinity_polling()
 
     def _handler_message_entrypoint(self, message: Message):
-        if self._handler_basic_command(message):
-            return
-        self._handler_command_generate(message)
+        with request_middleware():
+            if self._handler_basic_command(message):
+                return
+            self._handler_command_generate(message)
 
     def _handler_basic_command(self, message: Message) -> bool:
+        logger.info(f"Request is Basic command: {message.text}")
         for cmd, reply_text in BASIC_COMMAND_REPLIES.items():
             if message.text.startswith(cmd):
                 self._bot.reply_to(
