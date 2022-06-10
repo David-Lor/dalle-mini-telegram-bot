@@ -1,4 +1,5 @@
 import contextlib
+import time
 from collections import Counter
 from threading import Lock
 
@@ -13,6 +14,7 @@ from ...utils import get_uuid
 @contextlib.contextmanager
 def request_middleware(chat_id: int):
     request_id = get_uuid()
+    start = time.time()
     with logger.contextualize(request_id=request_id):
         try:
             logger.bind(chat_id=chat_id).info("Request started")
@@ -20,7 +22,8 @@ def request_middleware(chat_id: int):
         except Exception as ex:
             logger.exception("Request failed", ex)
         else:
-            logger.info("Request completed")
+            request_duration = round(time.time() - start, 4)
+            logger.bind(request_duration=request_duration).info("Request completed")
 
 
 @contextlib.contextmanager
