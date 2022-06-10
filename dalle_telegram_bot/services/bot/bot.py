@@ -5,8 +5,8 @@ import telebot
 from telebot.types import Message, InputMediaPhoto
 
 from .chatactions import ActionManager
-from .middlewares import request_middleware
-from .constants import BASIC_COMMAND_REPLIES, COMMAND_GENERATE
+from .middlewares import request_middleware, RateLimiter
+from . import constants
 from ..dalle import Dalle, DalleTemporarilyUnavailableException
 from ..dalle.models import DalleResponse
 from ...settings import Settings
@@ -24,10 +24,13 @@ class Bot:
         )
         self._bot.message_handler(func=lambda message: True)(self._handler_message_entrypoint)
 
-        self._typing_actions = ActionManager(
+        self._generating_bot_action = ActionManager(
             action=self._settings.command_generate_action,
             bot=self._bot,
             settings=self._settings,
+        )
+        self._dalle_generate_rate_limiter = RateLimiter(
+            limit_per_chat=self._settings.command_generate_chat_concurrent_limit,
         )
 
     def run(self):
@@ -35,15 +38,15 @@ class Bot:
         self._bot.infinity_polling()
 
     def _handler_message_entrypoint(self, message: Message):
-        with request_middleware():
+        with request_middleware(chat_id=message.chat.id):
             if self._handler_basic_command(message):
                 return
             self._handler_command_generate(message)
 
     def _handler_basic_command(self, message: Message) -> bool:
-        logger.info(f"Request is Basic command: {message.text}")
-        for cmd, reply_text in BASIC_COMMAND_REPLIES.items():
+        for cmd, reply_text in constants.BASIC_COMMAND_REPLIES.items():
             if message.text.startswith(cmd):
+                logger.info(f"Request is Basic command: {message.text}")
                 self._bot.reply_to(
                     message=message,
                     text=reply_text,
@@ -52,16 +55,23 @@ class Bot:
         return False
 
     def _handler_command_generate(self, message: Message) -> bool:
-        if not message.text.startswith(COMMAND_GENERATE):
+        if not message.text.startswith(constants.COMMAND_GENERATE):
             return False
 
-        prompt = message.text.replace(COMMAND_GENERATE, "").strip()
+        logger.info("Request is Generate command")
+        prompt = message.text.replace(constants.COMMAND_GENERATE, "").strip()
         if len(prompt) < 2:
             # TODO Error message
             return True
 
+        if not self._dalle_generate_rate_limiter.increase(message.chat.id):
+            self._bot.reply_to(message, constants.COMMAND_GENERATE_REPLY_RATELIMIT_EXCEEDED)
+            return True
+
+        # noinspection PyUnusedLocal
         response: Optional[DalleResponse] = None
-        self.start_typing_action(message.chat.id)
+        exception = None
+        self._generating_bot_action.start(message.chat.id)
 
         while True:
             try:
@@ -69,16 +79,18 @@ class Bot:
                     prompt=prompt,
                 )
             except DalleTemporarilyUnavailableException:
-                # TODO Max retries; move loop logic to Dalle service
+                # TODO Check Max retries; move loop logic to Dalle service
                 sleep(5)
-            except Exception:
-                self._bot.reply_to(message, "Unknown error")
-                break
+            except Exception as ex:
+                self._bot.reply_to(message, constants.UNKNOWN_ERROR_REPLY)
+                exception = ex
             else:
                 break
 
-        self.stop_typing_action(message.chat.id)
+        self._generating_bot_action.stop(message.chat.id)
         if not response:
+            if exception:
+                raise exception
             return True
 
         images_telegram = [InputMediaPhoto(image_bytes) for image_bytes in response.images_bytes]
@@ -89,9 +101,3 @@ class Bot:
             media=images_telegram,
         )
         return True
-
-    def start_typing_action(self, chat_id: int):
-        self._typing_actions.start(chat_id)
-
-    def stop_typing_action(self, chat_id: int):
-        self._typing_actions.stop(chat_id)
