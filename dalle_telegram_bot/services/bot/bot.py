@@ -77,6 +77,7 @@ class Bot:
             return True
 
         images_telegram = [InputMediaPhoto(image_bytes) for image_bytes in response.images_bytes]
+        images_telegram[0].caption = prompt
         self._bot.send_media_group(
             chat_id=message.chat.id,
             reply_to_message_id=message.message_id,
