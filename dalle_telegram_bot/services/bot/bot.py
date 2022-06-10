@@ -1,10 +1,10 @@
 from time import sleep
-from threading import Thread, Event
-from typing import Dict, Optional
+from typing import Optional
 
 import telebot
 from telebot.types import Message, InputMediaPhoto
 
+from .chatactions import ActionManager
 from .constants import BasicCommandsReplies, CommandGenerate
 from ..dalle import Dalle, DalleTemporarilyUnavailableException
 from ..dalle.models import DalleResponse
@@ -22,7 +22,11 @@ class Bot:
         )
         self._bot.message_handler(func=lambda message: True)(self._handler_message_entrypoint)
 
-        self._typingaction_chatids_events: Dict[int, Event] = dict()
+        self._typing_actions = ActionManager(
+            action="typing",
+            bot=self._bot,
+            settings=self._settings,
+        )
 
     def run(self):
         self._bot.infinity_polling()
@@ -60,6 +64,7 @@ class Bot:
                     prompt=prompt,
                 )
             except DalleTemporarilyUnavailableException:
+                # TODO Max retries; move loop logic to Dalle service
                 sleep(5)
             except Exception:
                 self._bot.reply_to(message, "Unknown error")
@@ -80,29 +85,7 @@ class Bot:
         return True
 
     def start_typing_action(self, chat_id: int):
-        # TODO Compatibilize when a chat_id sends multiple requests
-        event = Event()
-        thread = Thread(
-            target=self._typing_action_worker,
-            kwargs=dict(
-                chat_id=chat_id,
-                event=event,
-            ),
-            name=f"TypingActionWorker-{chat_id}",
-            daemon=True
-        )
-        self._typingaction_chatids_events[chat_id] = event
-        thread.start()
+        self._typing_actions.start(chat_id)
 
     def stop_typing_action(self, chat_id: int):
-        event = self._typingaction_chatids_events.get(chat_id)
-        if event:
-            event.set()
-
-    def _typing_action_worker(self, chat_id: int, event: Event):
-        while not event.is_set():
-            self._bot.send_chat_action(
-                chat_id=chat_id,
-                action="typing",
-            )
-            event.wait(4.5)
+        self._typing_actions.stop(chat_id)
