@@ -17,6 +17,9 @@ The bot is deployed here: [https://telegram.me/dalle_mini_bot](https://telegram.
 
 ## Changelog
 
+- v0.0.2
+  - Add pysocks requirement
+  - Detect when bot blocked by user on middleware
 - v0.0.1
   - Initial release
   - Generate images from "Generate command", return as album
