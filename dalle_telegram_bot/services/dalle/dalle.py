@@ -31,6 +31,7 @@ class Dalle:
             url=self._settings.dalle_api_url,
             json=body,
             timeout=self._settings.dalle_api_request_timeout_seconds,
+            proxies=self._settings.dalle_api_request_socks_proxy_for_requests_lib,
         )
         logger.bind(status_code=response.status_code).debug("DALLE response received")
 
