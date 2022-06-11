@@ -49,11 +49,15 @@ class Bot:
         for cmd, reply_text in constants.BASIC_COMMAND_REPLIES.items():
             if message.text.startswith(cmd):
                 logger.info(f"Request is Basic command: {message.text}")
+
+                disable_link_preview = cmd in constants.BASIC_COMMAND_DISABLE_LINK_PREVIEWS
                 self._bot.reply_to(
                     message=message,
                     text=reply_text,
+                    disable_web_page_preview=disable_link_preview,
                 )
                 return True
+
         return False
 
     def _handler_command_generate(self, message: Message) -> bool:
