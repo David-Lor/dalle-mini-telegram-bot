@@ -19,7 +19,9 @@ class Bot:
 
         self._bot = telebot.TeleBot(
             token=self._settings.telegram_bot_token,
-            parse_mode="HTML"
+            parse_mode="HTML",
+            threaded=True,
+            num_threads=settings.telegram_bot_threads,
         )
         self._bot.message_handler(func=lambda message: True)(self._handler_message_entrypoint)
 
