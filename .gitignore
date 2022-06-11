@@ -4,3 +4,4 @@
 *pycache*
 .pytest_cache
 *.pyc
+local/
