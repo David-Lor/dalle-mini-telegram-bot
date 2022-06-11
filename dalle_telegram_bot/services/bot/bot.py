@@ -76,8 +76,10 @@ class Bot:
             response = self._dalle.generate(prompt)
         except DalleTemporarilyUnavailableException:
             pass
+        finally:
+            self._generating_bot_action.stop(message.chat.id)
+            self._dalle_generate_rate_limiter.decrease(message.chat.id)
 
-        self._generating_bot_action.stop(message.chat.id)
         if not response:
             self._bot.reply_to(message, constants.COMMAND_GENERATE_REPLY_TEMPORARILY_UNAVAILABLE)
             return True
