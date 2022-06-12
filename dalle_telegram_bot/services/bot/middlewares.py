@@ -5,11 +5,10 @@ from threading import Lock
 
 import telebot
 from telebot.types import Message
-from telebot.apihelper import ApiTelegramException
 
 from . import constants
 from ...logger import logger
-from ...utils import get_uuid
+from ...utils import get_uuid, exception_is_bot_blocked_by_user
 
 
 @contextlib.contextmanager
@@ -21,7 +20,7 @@ def request_middleware(chat_id: int):
             logger.bind(chat_id=chat_id).info("Request started")
             yield
         except Exception as ex:
-            if isinstance(ex, ApiTelegramException) and ex.description == constants.ERROR_DESCRIPTION_BOT_BLOCKED_BY_USER:
+            if exception_is_bot_blocked_by_user(ex):
                 logger.info("Request completed: Bot blocked by the user")
                 return
             logger.exception("Request failed", ex)

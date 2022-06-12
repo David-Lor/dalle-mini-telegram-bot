@@ -15,5 +15,3 @@ COMMAND_GENERATE_PROMPT_TOO_SHORT = "Your prompt message is too short, try with 
 COMMAND_GENERATE_REPLY_TEMPORARILY_UNAVAILABLE = "Your image could not be generated. Please try again later."
 
 UNKNOWN_ERROR_REPLY = "Unknown error. Please try again later."
-
-ERROR_DESCRIPTION_BOT_BLOCKED_BY_USER = "Forbidden: bot was blocked by the user"
