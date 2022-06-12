@@ -43,15 +43,26 @@ class ActionManager:
             self._stop_action_thread(chat_id)
 
     def get_count(self, chat_id: int) -> int:
+        """Get current request count for a chat."""
         return self._chatids_counter[chat_id]
 
     def increase(self, chat_id: int) -> int:
+        """Increase the request counter for a chat, and return the new value.
+        The counter access should be locked while calling this method."""
         self._chatids_counter[chat_id] += 1
         return self.get_count(chat_id)
 
     def decrease(self, chat_id: int) -> int:
+        """Decrease the request counter for a chat, and return the new value.
+        If the new value is 0, remove the referenced that from the Counter.
+        The counter access should be locked while calling this method."""
         self._chatids_counter[chat_id] -= 1
-        return self.get_count(chat_id)
+        current = self.get_count(chat_id)
+        if current <= 0:
+            del self._chatids_counter[chat_id]
+        if current < 0:
+            current = 0
+        return current
 
     def _start_action_thread(self, chat_id: int):
         """Start the action thread. The chat_id MUST not be currently running any actions."""

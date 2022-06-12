@@ -55,13 +55,8 @@ class RateLimiter:
             return True
 
     def decrease(self, chat_id: int):
-        current = self._counter[chat_id]
-        if current <= 0:
+        new_value = self._counter[chat_id] - 1
+        if new_value <= 0:
+            del self._counter[chat_id]
             return
-        self._counter[chat_id] = current - 1
-
-    def clean(self):
-        with self._counter_lock:
-            for k, count in self._counter.items():
-                if count <= 0:
-                    self._counter.pop(k)
+        self._counter[chat_id] = new_value
