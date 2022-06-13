@@ -8,6 +8,8 @@ BASIC_COMMAND_DISABLE_LINK_PREVIEWS = {"/start", "/help", "/about"}
 
 COMMAND_GENERATE = "/generate"
 
+COMMAND_GENERATE_REPLY_GENERATING = "The image is being generated. Please wait a few minutes for it..."
+
 COMMAND_GENERATE_REPLY_RATELIMIT_EXCEEDED = "You have other images being generated. " \
                                             "Please wait until those are sent to you before asking for more."
 

@@ -1,3 +1,4 @@
+import contextlib
 from typing import Optional
 
 import telebot
@@ -76,9 +77,10 @@ class Bot:
             self._bot.reply_to(message, constants.COMMAND_GENERATE_REPLY_RATELIMIT_EXCEEDED)
             return True
 
-        response: Optional[DalleResponse] = None
+        generating_reply_message = self._bot.reply_to(message, constants.COMMAND_GENERATE_REPLY_GENERATING)
         self._generating_bot_action.start(message.chat.id)
 
+        response: Optional[DalleResponse] = None
         try:
             response = self._dalle.generate(prompt)
         except DalleTemporarilyUnavailableException:
@@ -86,6 +88,11 @@ class Bot:
         finally:
             self._generating_bot_action.stop(message.chat.id)
             self._dalle_generate_rate_limiter.decrease(message.chat.id)
+            with contextlib.suppress(Exception):
+                self._bot.delete_message(
+                    chat_id=generating_reply_message.chat.id,
+                    message_id=generating_reply_message.message_id
+                )
 
         if not response:
             self._bot.reply_to(message, constants.COMMAND_GENERATE_REPLY_TEMPORARILY_UNAVAILABLE)
