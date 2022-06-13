@@ -1,0 +1,22 @@
+name: "Tag Version on Pull Request merge"
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  TagOnPR:
+    name: Tag on Pull Request merge
+    runs-on: ubuntu-latest
+    # Reference: https://github.com/David-Lor/action-tag-on-pr-merge/blob/develop/.github/workflows/tag_release.yaml
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Tag on PR merge
+        id: tag-on-pr-merge
+        uses: David-Lor/action-tag-on-pr-merge@main
+        with:
+          push-tag: true
+      - name: Print fetched tag
+        run: echo "${{ steps.tag-on-pr-merge.outputs.tag }}"
