@@ -37,8 +37,16 @@ class Bot:
         )
 
     def run(self):
+        if self._settings.telegram_bot_delete_webhook:
+            self.delete_webhook()
+
         logger.info("Running bot with Polling")
         self._bot.infinity_polling()
+
+    def delete_webhook(self):
+        logger.info("Deleting bot webhook...")
+        self._bot.delete_webhook()
+        logger.info("Webhook deleted")
 
     def _handler_message_entrypoint(self, message: Message):
         with request_middleware(chat_id=message.chat.id):
