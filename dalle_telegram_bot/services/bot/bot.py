@@ -1,3 +1,4 @@
+import contextlib
 from typing import Optional
 
 import telebot
@@ -29,14 +30,23 @@ class Bot:
             action=self._settings.command_generate_action,
             bot=self._bot,
             settings=self._settings,
+            timeout=self._settings.dalle_generation_timeout_seconds,
         )
         self._dalle_generate_rate_limiter = RateLimiter(
             limit_per_chat=self._settings.command_generate_chat_concurrent_limit,
         )
 
     def run(self):
+        if self._settings.telegram_bot_delete_webhook:
+            self.delete_webhook()
+
         logger.info("Running bot with Polling")
         self._bot.infinity_polling()
+
+    def delete_webhook(self):
+        logger.info("Deleting bot webhook...")
+        self._bot.delete_webhook()
+        logger.info("Webhook deleted")
 
     def _handler_message_entrypoint(self, message: Message):
         with request_middleware(chat_id=message.chat.id):
@@ -75,9 +85,10 @@ class Bot:
             self._bot.reply_to(message, constants.COMMAND_GENERATE_REPLY_RATELIMIT_EXCEEDED)
             return True
 
-        response: Optional[DalleResponse] = None
+        generating_reply_message = self._bot.reply_to(message, constants.COMMAND_GENERATE_REPLY_GENERATING)
         self._generating_bot_action.start(message.chat.id)
 
+        response: Optional[DalleResponse] = None
         try:
             response = self._dalle.generate(prompt)
         except DalleTemporarilyUnavailableException:
@@ -85,6 +96,11 @@ class Bot:
         finally:
             self._generating_bot_action.stop(message.chat.id)
             self._dalle_generate_rate_limiter.decrease(message.chat.id)
+            with contextlib.suppress(Exception):
+                self._bot.delete_message(
+                    chat_id=generating_reply_message.chat.id,
+                    message_id=generating_reply_message.message_id
+                )
 
         if not response:
             self._bot.reply_to(message, constants.COMMAND_GENERATE_REPLY_TEMPORARILY_UNAVAILABLE)
