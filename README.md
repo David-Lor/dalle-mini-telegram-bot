@@ -19,6 +19,12 @@ The bot is deployed here: [https://telegram.me/dalle_mini_bot](https://telegram.
 
 ## Changelog
 
+- v0.1.1
+  - Send message to users while the image is being generated, informing that it may take a while; the message is deleted on success or controlled error
+  - Add `/about` command
+  - Timeout chat 'typing-like' action & stop it when bot blocked by user
+  - Remove chats with count of 0 from Counters
+  - Setting for deleting Telegram bot Webhook on startup
 - v0.0.2
   - Add pysocks requirement
   - Detect when bot blocked by user on middleware
