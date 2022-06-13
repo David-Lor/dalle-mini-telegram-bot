@@ -1,9 +1,10 @@
 BASIC_COMMAND_REPLIES = {
-    "/start": """👋 Hello there!\n\nThis bot returns 9 AI-generated images from any prompt you give, using <a href="https://github.com/borisdayma/dalle-mini">DALL·E mini</a>.\n\n<b>Example:</b> Send a message like <pre>/generate a cat eating a hamburger</pre> to generate a set of images.""",
+    "/start": """👋 Hello there!\n\nThis bot returns 9 AI-generated images from any prompt you give, using <a href="https://github.com/borisdayma/dalle-mini">DALL·E mini</a>.\n\n<b>Example:</b> Send a message like <pre>/generate a cat eating a hamburger</pre> to generate a set of images.\n\nCheck /help and /about for more info.""",
     "/help": "Send a message like <pre>/generate a cat eating a hamburger</pre> to generate a set of images.",
+    "/about": """<b><a href="https://github.com/David-Lor/dalle-mini-telegram-bot">DALL·E mini Telegram bot</a></b> is a bot that returns 9 AI-generated images from any prompt you give, using <a href="https://github.com/borisdayma/dalle-mini">DALL·E mini</a>.\n\n<b>How does it work?</b>\nThe provided text prompt is passed to <a href="https://github.com/borisdayma/dalle-mini">DALL·E mini</a>, the same way it's done on the official webpage. The returned pictures are forwarded to Telegram via the bot and sent to you.\n\nBuilt with ♥️ using Python and pyTelegramBotAPI.\n<b>Source code:</b> https://github.com/David-Lor/dalle-mini-telegram-bot""",
 }
 
-BASIC_COMMAND_DISABLE_LINK_PREVIEWS = {"/start"}
+BASIC_COMMAND_DISABLE_LINK_PREVIEWS = {"/start", "/help", "/about"}
 
 COMMAND_GENERATE = "/generate"
 
