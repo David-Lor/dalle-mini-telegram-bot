@@ -42,10 +42,9 @@ class Dalle:
 
     @staticmethod
     def _parse_response(prompt: str, response: requests.Response) -> DalleResponse:
-        if response.status_code != 200:
-            if response.status_code == 503:
-                raise DalleTemporarilyUnavailableException()
-            response.raise_for_status()
+        if response.status_code == 503:
+            raise DalleTemporarilyUnavailableException()
+        response.raise_for_status()
 
         return DalleResponse(
             **response.json(),
