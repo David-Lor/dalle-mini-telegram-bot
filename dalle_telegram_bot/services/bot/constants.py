@@ -13,7 +13,12 @@ COMMAND_GENERATE_REPLY_GENERATING = "The image is being generated. Please wait a
 COMMAND_GENERATE_REPLY_RATELIMIT_EXCEEDED = "You have other images being generated. " \
                                             "Please wait until those are sent to you before asking for more."
 
-COMMAND_GENERATE_PROMPT_TOO_SHORT = "Your prompt message is too short, try with something longer."
+COMMAND_GENERATE_PROMPT_LENGTH_MIN = 2
+COMMAND_GENERATE_PROMPT_LENGTH_MAX = 1000
+
+COMMAND_GENERATE_PROMPT_TOO_SHORT = f"Your prompt message is too short, try with something longer (at least {COMMAND_GENERATE_PROMPT_LENGTH_MIN} characters)."
+
+COMMAND_GENERATE_PROMPT_TOO_LONG = f"Your prompt message is too long, try with something shorter (at most {COMMAND_GENERATE_PROMPT_LENGTH_MAX} characters)."
 
 COMMAND_GENERATE_REPLY_TEMPORARILY_UNAVAILABLE = "Your image could not be generated. Please try again later."
 

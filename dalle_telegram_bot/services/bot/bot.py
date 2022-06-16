@@ -75,9 +75,8 @@ class Bot:
             return False
 
         logger.info("Request is Generate command")
-        prompt = message.text.replace(constants.COMMAND_GENERATE, "").strip()
-        if len(prompt) < 2:
-            self._bot.reply_to(message, constants.COMMAND_GENERATE_PROMPT_TOO_SHORT)
+        prompt = self.__command_generate_get_prompt(message)
+        if not prompt:
             return True
 
         if not self._dalle_generate_rate_limiter.increase(message.chat.id):
@@ -114,3 +113,19 @@ class Bot:
             media=images_telegram,
         )
         return True
+
+    def __command_generate_get_prompt(self, message: Message) -> Optional[str]:
+        """Get the prompt text from a /generate command and return it.
+        If the prompt is invalid, replies to the user and returns None."""
+        prompt = message.text.replace(constants.COMMAND_GENERATE, "").strip()
+        prompt_length = len(prompt)
+
+        if prompt_length < constants.COMMAND_GENERATE_PROMPT_LENGTH_MIN:
+            self._bot.reply_to(message, constants.COMMAND_GENERATE_PROMPT_TOO_SHORT)
+            return None
+
+        if prompt_length > constants.COMMAND_GENERATE_PROMPT_LENGTH_MAX:
+            self._bot.reply_to(message, constants.COMMAND_GENERATE_PROMPT_TOO_LONG)
+            return None
+
+        return prompt
