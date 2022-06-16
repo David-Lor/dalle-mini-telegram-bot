@@ -119,13 +119,15 @@ class Bot:
         If the prompt is invalid, replies to the user and returns None."""
         prompt = message.text.replace(constants.COMMAND_GENERATE, "").strip()
         prompt_length = len(prompt)
+        min_length = self._settings.command_generate_prompt_length_min
+        max_length = self._settings.command_generate_prompt_length_max
 
-        if prompt_length < constants.COMMAND_GENERATE_PROMPT_LENGTH_MIN:
-            self._bot.reply_to(message, constants.COMMAND_GENERATE_PROMPT_TOO_SHORT)
+        if prompt_length < min_length:
+            self._bot.reply_to(message, constants.COMMAND_GENERATE_PROMPT_TOO_SHORT.format(characters=min_length))
             return None
 
-        if prompt_length > constants.COMMAND_GENERATE_PROMPT_LENGTH_MAX:
-            self._bot.reply_to(message, constants.COMMAND_GENERATE_PROMPT_TOO_LONG)
+        if prompt_length > max_length:
+            self._bot.reply_to(message, constants.COMMAND_GENERATE_PROMPT_TOO_LONG.format(characters=max_length))
             return None
 
         return prompt

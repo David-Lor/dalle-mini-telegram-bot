@@ -10,6 +10,8 @@ class Settings(pydantic.BaseSettings):
 
     command_generate_action: str = "typing"
     command_generate_chat_concurrent_limit: int = 3
+    command_generate_prompt_length_min: int = pydantic.Field(default=2, gt=1)
+    command_generate_prompt_length_max: int = pydantic.Field(default=1000, gt=1)
 
     dalle_api_url: pydantic.AnyHttpUrl = "https://bf.dallemini.ai/generate"
     dalle_api_request_timeout_seconds: float = 3.5 * 60
