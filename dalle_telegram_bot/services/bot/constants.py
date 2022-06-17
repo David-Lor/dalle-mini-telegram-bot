@@ -13,10 +13,18 @@ COMMAND_GENERATE_REPLY_GENERATING = "The image is being generated. Please wait a
 COMMAND_GENERATE_REPLY_RATELIMIT_EXCEEDED = "You have other images being generated. " \
                                             "Please wait until those are sent to you before asking for more."
 
-COMMAND_GENERATE_PROMPT_TOO_SHORT = "Your prompt message is too short, try with something longer (at least {characters} characters)."
+COMMAND_GENERATE_PROMPT_TOO_SHORT = "Your prompt message is too short, try with something longer " \
+                                    "(at least {characters} characters)."
 
-COMMAND_GENERATE_PROMPT_TOO_LONG = "Your prompt message is too long, try with something shorter (at most {characters} characters)."
+COMMAND_GENERATE_PROMPT_TOO_LONG = "Your prompt message is too long, try with something shorter " \
+                                   "(at most {characters} characters)."
 
 COMMAND_GENERATE_REPLY_TEMPORARILY_UNAVAILABLE = "Your image could not be generated. Please try again later."
 
 UNKNOWN_ERROR_REPLY = "Unknown error. Please try again later."
+
+COMMANDS_HELP = {
+    "/generate": "Generate a set of pictures from a given prompt. The prompt must be given after the /generate command",
+    "/help": "Help about the bot usage",
+    "/about": "About the bot",
+}

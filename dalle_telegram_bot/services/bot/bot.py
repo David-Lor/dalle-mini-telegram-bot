@@ -2,7 +2,7 @@ import contextlib
 from typing import Optional
 
 import telebot
-from telebot.types import Message, InputMediaPhoto
+from telebot.types import Message, InputMediaPhoto, BotCommand
 
 from . import constants
 from .chatactions import ActionManager
@@ -42,6 +42,8 @@ class Bot:
         # TODO Run delete_webhook and set_commands from a setup() method?
         if self._settings.telegram_bot_delete_webhook:
             self.delete_webhook()
+        if self._settings.telegram_bot_set_commands:
+            self.set_commands()
 
         logger.info("Running bot with Polling")
         self._bot.infinity_polling()
@@ -58,6 +60,14 @@ class Bot:
             self._stop_gracefully()
         else:
             self._stop_force()
+
+    def set_commands(self):
+        logger.debug("Setting bot commands...")
+        self._bot.set_my_commands([
+            BotCommand(command=k, description=v)
+            for k, v in constants.COMMANDS_HELP.items()
+        ])
+        logger.info("Bot commands set")
 
     def delete_webhook(self):
         logger.info("Deleting bot webhook...")
