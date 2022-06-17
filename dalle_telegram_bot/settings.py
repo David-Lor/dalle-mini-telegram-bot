@@ -7,6 +7,7 @@ class Settings(pydantic.BaseSettings):
     telegram_bot_token: str
     telegram_bot_threads: int = 500
     telegram_bot_delete_webhook: bool = False
+    telegram_bot_graceful_shutdown: bool = False
 
     command_generate_action: str = "typing"
     command_generate_chat_concurrent_limit: int = 3

@@ -37,23 +37,53 @@ class Bot:
         )
 
     def run(self):
+        """Run the bot in foreground. Perform initial setup (delete webhook, set commands)"""
+        # TODO Need to pass possible exceptions from run() to the main entrypoint
+        # TODO Run delete_webhook and set_commands from a setup() method?
         if self._settings.telegram_bot_delete_webhook:
             self.delete_webhook()
 
         logger.info("Running bot with Polling")
         self._bot.infinity_polling()
 
+    def stop(self, graceful_shutdown: Optional[bool] = None):
+        """Stop the bot execution.
+        :param graceful_shutdown: if True, wait for pending requests to finalize (but stop accepting new requests).
+                                  If false, stop inmediately. If None (default), use the configured setting.
+        """
+        if graceful_shutdown is None:
+            graceful_shutdown = self._settings.telegram_bot_graceful_shutdown
+
+        if graceful_shutdown:
+            self._stop_gracefully()
+        else:
+            self._stop_force()
+
     def delete_webhook(self):
         logger.info("Deleting bot webhook...")
         self._bot.delete_webhook()
         logger.info("Webhook deleted")
+
+    def _stop_force(self):
+        logger.info("Stopping bot polling (force-stop)...")
+        self._bot.stop_polling()
+        logger.info("Bot stopped")
+
+    def _stop_gracefully(self):
+        logger.info("Stopping bot gracefully (waiting for pending requests to end, not accepting new requests)...")
+        # stop_bot() waits for remaining requests to complete
+        self._bot.stop_bot()
+        logger.info("Bot stopped")
 
     def _handler_message_entrypoint(self, message: Message):
         with request_middleware(chat_id=message.chat.id):
             with message_request_middleware(bot=self._bot, message=message):
                 if self._handler_basic_command(message):
                     return
-                self._handler_command_generate(message)
+                if self._handler_command_generate(message):
+                    return
+                if self._handler_command_sleep(message):
+                    return
 
     def _handler_basic_command(self, message: Message) -> bool:
         for cmd, reply_text in constants.BASIC_COMMAND_REPLIES.items():
@@ -69,6 +99,25 @@ class Bot:
                 return True
 
         return False
+
+    def _handler_command_sleep(self, message: Message) -> bool:
+        txt = message.text
+        if not txt.startswith("/sleep"):
+            return False
+
+        try:
+            sleep_time = float(txt.split()[-1])
+        except (ValueError, IndexError):
+            self._bot.reply_to(message, "Invalid sleep time")
+            return True
+
+        import time
+        confirm_msg = self._bot.reply_to(message, f"Sleeping for {sleep_time}s...")
+        time.sleep(sleep_time)
+
+        self._bot.delete_message(chat_id=confirm_msg.chat.id, message_id=confirm_msg.message_id)
+        self._bot.reply_to(message, f"Finished sleeping for {sleep_time}s")
+        return True
 
     def _handler_command_generate(self, message: Message) -> bool:
         if not message.text.startswith(constants.COMMAND_GENERATE):
