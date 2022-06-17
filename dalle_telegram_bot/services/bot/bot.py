@@ -98,7 +98,7 @@ class Bot:
     def _handler_basic_command(self, message: Message) -> bool:
         for cmd, reply_text in constants.BASIC_COMMAND_REPLIES.items():
             if message.text.startswith(cmd):
-                logger.info(f"Request is Basic command: {message.text}")
+                logger.bind(command=cmd).info("Request is Basic command")
 
                 disable_link_preview = cmd in constants.BASIC_COMMAND_DISABLE_LINK_PREVIEWS
                 self._bot.reply_to(
@@ -111,6 +111,7 @@ class Bot:
         return False
 
     def _handler_command_sleep(self, message: Message) -> bool:
+        # TODO Remove
         txt = message.text
         if not txt.startswith("/sleep"):
             return False
@@ -133,7 +134,7 @@ class Bot:
         if not message.text.startswith(constants.COMMAND_GENERATE):
             return False
 
-        logger.info("Request is Generate command")
+        logger.bind(cmd=constants.COMMAND_GENERATE).info("Request is Generate command")
         prompt = self.__command_generate_get_prompt(message)
         if not prompt:
             return True
@@ -181,12 +182,16 @@ class Bot:
         min_length = self._settings.command_generate_prompt_length_min
         max_length = self._settings.command_generate_prompt_length_max
 
-        if prompt_length < min_length:
-            self._bot.reply_to(message, constants.COMMAND_GENERATE_PROMPT_TOO_SHORT.format(characters=min_length))
-            return None
+        with logger.contextualize(prompt_length=prompt_length):
+            if prompt_length < min_length:
+                logger.debug("Generate command prompt too short")
+                self._bot.reply_to(message, constants.COMMAND_GENERATE_PROMPT_TOO_SHORT.format(characters=min_length))
+                return None
 
-        if prompt_length > max_length:
-            self._bot.reply_to(message, constants.COMMAND_GENERATE_PROMPT_TOO_LONG.format(characters=max_length))
-            return None
+            if prompt_length > max_length:
+                logger.debug("Generate command prompt too long")
+                self._bot.reply_to(message, constants.COMMAND_GENERATE_PROMPT_TOO_LONG.format(characters=max_length))
+                return None
 
-        return prompt
+            logger.debug("Generate command prompt is valid")
+            return prompt

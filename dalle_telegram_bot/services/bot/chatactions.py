@@ -92,26 +92,30 @@ class ActionManager:
             event.set()
 
     def _action_worker(self, chat_id: int, event: Event):
-        start = time.time()
-        while not event.is_set():
-            try:
-                self._bot.send_chat_action(
-                    chat_id=chat_id,
-                    action=self._action,
-                )
+        with logger.contextualize(chat_id=chat_id, chat_action=self._action):
+            start = time.time()
+            while not event.is_set():
+                try:
+                    logger.trace("Sending chat action...")
+                    self._bot.send_chat_action(
+                        chat_id=chat_id,
+                        action=self._action,
+                    )
+                    logger.debug("Chat action sent")
 
-            except Exception as ex:
-                if exception_is_bot_blocked_by_user(ex):
-                    logger.info(f"Bot blocked by user, stopping {self._action} action")
+                except Exception as ex:
+                    if exception_is_bot_blocked_by_user(ex):
+                        logger.info("Bot blocked by user, stopping chat action")
+                        self._stop_action_thread(chat_id)
+                        return
+                    logger.opt(exception=ex).warning("Chat action failed delivery")
+
+                elapsed = time.time() - start
+                if elapsed >= self._timeout:
+                    logger.bind(elapsed_time_seconds=round(elapsed, 3)).warning("Chat action timed out")
                     self._stop_action_thread(chat_id)
                     return
 
-                logger.opt(exception=ex).warning(f"Chat action {self._action} failed delivery: {ex}")
+                event.wait(4.5)
 
-            elapsed = time.time() - start
-            if elapsed >= self._timeout:
-                logger.warning(f"Chat action {self._action} timed out ({round(elapsed, 3)}s)")
-                self._stop_action_thread(chat_id)
-                return
-
-            event.wait(4.5)
+            logger.debug("Chat action finalized")
