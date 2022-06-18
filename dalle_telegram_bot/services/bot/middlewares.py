@@ -1,7 +1,8 @@
 import contextlib
 import time
-from collections import Counter
+import threading
 from threading import Lock
+from collections import Counter
 
 import telebot
 from telebot.types import Message
@@ -15,15 +16,23 @@ from ...utils import get_uuid, exception_is_bot_blocked_by_user
 def request_middleware(chat_id: int):
     request_id = get_uuid()
     start = time.time()
+
     with logger.contextualize(request_id=request_id):
         try:
-            logger.bind(chat_id=chat_id).info("Request started")
+            logger.bind(
+                chat_id=chat_id,
+                thread_name=threading.current_thread().name
+            ).info("Request started")
             yield
+
         except Exception as ex:
-            if exception_is_bot_blocked_by_user(ex):
-                logger.info("Request completed: Bot blocked by the user")
-                return
-            logger.exception("Request failed", ex)
+            request_duration = round(time.time() - start, 4)
+            with logger.contextualize(request_duration=request_duration):
+                if exception_is_bot_blocked_by_user(ex):
+                    logger.info("Request completed: Bot blocked by the user")
+                    return
+                logger.exception("Request failed", ex)
+
         else:
             request_duration = round(time.time() - start, 4)
             logger.bind(request_duration=request_duration).info("Request completed")

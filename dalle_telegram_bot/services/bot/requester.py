@@ -1,6 +1,6 @@
 import threading
 from threading import Lock
-from typing import Dict, Any
+from typing import Dict
 
 import requests
 import wait4it
@@ -13,7 +13,7 @@ from ...logger import logger
 class TelegramBotAPIRequester:
     def __init__(self, settings: Settings):
         self._settings = settings
-        self._sessions: Dict[Any, requests.Session] = dict()
+        self._sessions: Dict[str, requests.Session] = dict()
         self._sessions_lock = Lock()
 
         telebot.apihelper.CUSTOM_REQUEST_SENDER = wait4it.wait_for_pass(
@@ -34,14 +34,14 @@ class TelegramBotAPIRequester:
         return r
 
     def get_session(self) -> requests.Session:
-        thread_id = threading.get_ident()
+        thread_name = threading.current_thread().name
         with self._sessions_lock:
-            session = self._sessions.get(thread_id)
+            session = self._sessions.get(thread_name)
 
             if not session:
                 session = requests.Session()
-                self._sessions[thread_id] = session
-                logger.bind(thread_id=thread_id).trace("New requests.Session created")
+                self._sessions[thread_name] = session
+                logger.bind(thread_name=thread_name).trace("New requests.Session created")
 
         return session
 
