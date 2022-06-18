@@ -6,7 +6,7 @@ from typing import Dict
 import telebot
 
 from ...utils import exception_is_bot_blocked_by_user
-from ...logger import logger
+from ...logger import logger, get_request_id
 from ...settings import Settings
 
 
@@ -73,17 +73,19 @@ class ActionManager:
     def _start_action_thread(self, chat_id: int):
         """Start the action thread. The chat_id MUST not be currently running any actions."""
         event = Event()
-        thread = Thread(
+        self._chatids_events[chat_id] = event
+        request_id = get_request_id()
+
+        Thread(
             target=self._action_worker,
             kwargs=dict(
+                request_id=request_id,
                 chat_id=chat_id,
                 event=event,
             ),
             name=f"TelegramBot-ActionWorker-{self._action}-{chat_id}",
             daemon=True
-        )
-        self._chatids_events[chat_id] = event
-        thread.start()
+        ).start()
 
     def _stop_action_thread(self, chat_id: int):
         """Stop the action thread for a chat_id. The chat_id MUST be currently running an action."""
@@ -91,8 +93,8 @@ class ActionManager:
         if event:
             event.set()
 
-    def _action_worker(self, chat_id: int, event: Event):
-        with logger.contextualize(chat_id=chat_id, chat_action=self._action):
+    def _action_worker(self, request_id: str, chat_id: int, event: Event):
+        with logger.contextualize(request_id=request_id, chat_id=chat_id, chat_action=self._action):
             start = time.time()
             while not event.is_set():
                 try:
