@@ -116,8 +116,6 @@ class Bot:
                     return
                 if self._handler_command_generate(message):
                     return
-                if self._handler_command_sleep(message):
-                    return
 
     def _handler_basic_command(self, message: Message) -> bool:
         for cmd, reply_text in constants.BASIC_COMMAND_REPLIES.items():
@@ -133,26 +131,6 @@ class Bot:
                 return True
 
         return False
-
-    def _handler_command_sleep(self, message: Message) -> bool:
-        # TODO Remove
-        txt = message.text
-        if not txt.startswith("/sleep"):
-            return False
-
-        try:
-            sleep_time = float(txt.split()[-1])
-        except (ValueError, IndexError):
-            self._bot.reply_to(message, "Invalid sleep time")
-            return True
-
-        import time
-        confirm_msg = self._bot.reply_to(message, f"Sleeping for {sleep_time}s...")
-        time.sleep(sleep_time)
-
-        self._bot.delete_message(chat_id=confirm_msg.chat.id, message_id=confirm_msg.message_id)
-        self._bot.reply_to(message, f"Finished sleeping for {sleep_time}s")
-        return True
 
     def _handler_command_generate(self, message: Message) -> bool:
         if not message.text.startswith(constants.COMMAND_GENERATE):
