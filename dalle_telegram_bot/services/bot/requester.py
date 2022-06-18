@@ -1,14 +1,12 @@
 import contextlib
 import threading
 from threading import Lock
-from typing import Dict, Union
-from types import ModuleType
+from typing import Dict
 
 import requests
 import wait4it
 import telebot.apihelper
 
-from . import constants
 from ...settings import Settings
 from ...logger import logger
 
@@ -26,21 +24,18 @@ class TelegramBotAPIRequester:
         )(self.request)
 
     def request(self, *args, **kwargs):
-        requester = self.get_session()
-        r = requester.request(*args, **kwargs)
+        if self._settings.telegram_bot_api_sessions_enabled:
+            session = self.get_session()
+            r = session.request(*args, **kwargs)
+        else:
+            r = requests.request(*args, **kwargs)
 
         if self._response_is_toomanyrequests(r):
             raise TelegramBotAPITooManyRequestsException(r.json().get("description"))
         return r
 
-    def get_session(self) -> Union[requests.Session, ModuleType]:
-        if not self._settings.telegram_bot_api_sessions_enabled:
-            return requests
-
+    def get_session(self) -> requests.Session:
         thread_name = threading.current_thread().name
-        if not thread_name.startswith(constants.PYTELEGRAMBOTAPI_THREAD_WORKER_STARTNAME):
-            return requests
-
         with self._sessions_lock:
             session = self._sessions.get(thread_name)
 

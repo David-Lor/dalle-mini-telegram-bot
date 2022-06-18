@@ -28,5 +28,3 @@ COMMANDS_HELP = {
     "/help": "Help about the bot usage",
     "/about": "About the bot",
 }
-
-PYTELEGRAMBOTAPI_THREAD_WORKER_STARTNAME = "WorkerThread"
