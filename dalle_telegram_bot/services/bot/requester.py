@@ -103,5 +103,4 @@ class TelegramBotAPIRequester:
 
 
 class TelegramBotAPITooManyRequestsException(Exception):
-    def __init__(self, message):
-        super(message)
+    pass
