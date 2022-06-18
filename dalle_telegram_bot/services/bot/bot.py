@@ -57,6 +57,9 @@ class Bot:
         if self._polling_thread:
             return
 
+        if self._requester:
+            self._requester.start()
+
         self._polling_thread = Thread(
             target=self.run,
             name="TelegramBotPolling",

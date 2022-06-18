@@ -10,6 +10,7 @@ class Settings(pydantic.BaseSettings):
     telegram_bot_graceful_shutdown: bool = False
     telegram_bot_set_commands: bool = False
     telegram_bot_api_sessions_enabled: bool = True
+    telegram_bot_api_sessions_ttl_seconds: float = 360
     telegram_bot_ratelimit_retry: bool = True
     telegram_bot_ratelimit_retry_delay_seconds = 5
     telegram_bot_ratelimit_retry_timeout_seconds = 120
