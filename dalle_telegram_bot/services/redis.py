@@ -14,6 +14,8 @@ class Redis(AbstractLogger):
         self._redis = redis.Redis(
             host=self._settings.redis_host,
             port=self._settings.redis_port,
+            username=self._settings.redis_username,
+            password=self._settings.redis_password,
             db=self._settings.redis_db,
         )
 

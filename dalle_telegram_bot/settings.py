@@ -29,6 +29,8 @@ class Settings(pydantic.BaseSettings):
     redis_host: Optional[str] = None
     redis_port: int = 6379
     redis_db: int = 0
+    redis_username: Optional[str] = None
+    redis_password: Optional[str] = None
     redis_logs_queue_name: Optional[str] = None
 
     log_level: str = "INFO"
