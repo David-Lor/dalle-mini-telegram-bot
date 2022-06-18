@@ -6,7 +6,7 @@ from typing import Dict
 import telebot
 
 from ...utils import exception_is_bot_blocked_by_user
-from ...logger import logger
+from ...logger import logger, get_request_id
 from ...settings import Settings
 
 
@@ -73,17 +73,19 @@ class ActionManager:
     def _start_action_thread(self, chat_id: int):
         """Start the action thread. The chat_id MUST not be currently running any actions."""
         event = Event()
-        thread = Thread(
+        self._chatids_events[chat_id] = event
+        request_id = get_request_id()
+
+        Thread(
             target=self._action_worker,
             kwargs=dict(
+                request_id=request_id,
                 chat_id=chat_id,
                 event=event,
             ),
             name=f"TelegramBot-ActionWorker-{self._action}-{chat_id}",
             daemon=True
-        )
-        self._chatids_events[chat_id] = event
-        thread.start()
+        ).start()
 
     def _stop_action_thread(self, chat_id: int):
         """Stop the action thread for a chat_id. The chat_id MUST be currently running an action."""
@@ -91,27 +93,31 @@ class ActionManager:
         if event:
             event.set()
 
-    def _action_worker(self, chat_id: int, event: Event):
-        start = time.time()
-        while not event.is_set():
-            try:
-                self._bot.send_chat_action(
-                    chat_id=chat_id,
-                    action=self._action,
-                )
+    def _action_worker(self, request_id: str, chat_id: int, event: Event):
+        with logger.contextualize(request_id=request_id, chat_id=chat_id, chat_action=self._action):
+            start = time.time()
+            while not event.is_set():
+                try:
+                    logger.trace("Sending chat action...")
+                    self._bot.send_chat_action(
+                        chat_id=chat_id,
+                        action=self._action,
+                    )
+                    logger.debug("Chat action sent")
 
-            except Exception as ex:
-                if exception_is_bot_blocked_by_user(ex):
-                    logger.info(f"Bot blocked by user, stopping {self._action} action")
+                except Exception as ex:
+                    if exception_is_bot_blocked_by_user(ex):
+                        logger.info("Bot blocked by user, stopping chat action")
+                        self._stop_action_thread(chat_id)
+                        return
+                    logger.opt(exception=ex).warning("Chat action failed delivery")
+
+                elapsed = time.time() - start
+                if elapsed >= self._timeout:
+                    logger.bind(elapsed_time_seconds=round(elapsed, 3)).warning("Chat action timed out")
                     self._stop_action_thread(chat_id)
                     return
 
-                logger.opt(exception=ex).warning(f"Chat action {self._action} failed delivery: {ex}")
+                event.wait(4.5)
 
-            elapsed = time.time() - start
-            if elapsed >= self._timeout:
-                logger.warning(f"Chat action {self._action} timed out ({round(elapsed, 3)}s)")
-                self._stop_action_thread(chat_id)
-                return
-
-            event.wait(4.5)
+            logger.debug("Chat action finalized")

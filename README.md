@@ -19,6 +19,13 @@ The bot is deployed here: [https://telegram.me/dalle_mini_bot](https://telegram.
 
 ## Changelog
 
+- v0.2.1
+  - Graceful shutdown (configurable; wait until pending requests are completed, while not accepting new requests)
+  - Retry Telegram Bot API requests on 'Too Many Requests' error; usage of requests.Session
+  - Set bot commands via API on startup, for Telegram hinting
+  - Limit prompt text length on Generate command (configurable min/max limits via settings)
+  - Add Redis integration for sending logs to Redis queue
+  - Improvements in log records
 - v0.1.1
   - Send message to users while the image is being generated, informing that it may take a while; the message is deleted on success or controlled error
   - Add `/about` command
@@ -30,6 +37,6 @@ The bot is deployed here: [https://telegram.me/dalle_mini_bot](https://telegram.
   - Detect when bot blocked by user on middleware
 - v0.0.1
   - Initial release
-  - Generate images from "Generate command", return as album
-  - "Generate command" rate limited at chat level (concurrent requests limit)
-  - "Generate command" sends a 'typing-like' status to the user, while the prompt/s requested are being generated
+    - Generate images from `/generate` command, return as album
+    - `/generate` command rate limited at chat level (concurrent requests limit)
+    - `/generate` command sends a 'typing-like' status to the user, while the prompt/s requested are being generated
