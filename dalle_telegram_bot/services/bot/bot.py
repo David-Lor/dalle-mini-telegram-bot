@@ -68,6 +68,9 @@ class Bot:
         else:
             self._stop_force()
 
+        if self._requester:
+            self._requester.teardown()
+
     def set_commands(self):
         logger.debug("Setting bot commands...")
         self._bot.set_my_commands([

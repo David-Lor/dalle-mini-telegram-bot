@@ -1,3 +1,4 @@
+import contextlib
 import threading
 from threading import Lock
 from typing import Dict
@@ -44,6 +45,16 @@ class TelegramBotAPIRequester:
                 logger.bind(thread_name=thread_name).trace("New requests.Session created")
 
         return session
+
+    def teardown(self):
+        logger.bind(sessions_count=len(self._sessions)).debug("Closing TelegramBotAPI request sessions...")
+        closed_count = 0
+        for k in list(self._sessions.keys()):
+            with contextlib.suppress(Exception):
+                self._sessions.pop(k).close()
+                closed_count += 1
+
+        logger.bind(closed_sessions_count=closed_count).info("Closed TelegramBotAPI request sessions")
 
     @staticmethod
     def _response_is_toomanyrequests(response: requests.Response) -> bool:
