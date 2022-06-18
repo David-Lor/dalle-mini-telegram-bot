@@ -1,0 +1,60 @@
+# When a PR to 'main' is opened/edited, validate that it has a valid version tag on its description,
+# that will create a tag when merged, using the "repo-tag_on_pr_merge" workflow.
+
+name: Verify PR Version Release Tag
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+    branches:
+      - main
+
+jobs:
+  Verify:
+    name: Verify PR Version Release Tag
+    runs-on: ubuntu-latest
+    env:
+      NOTAG_COMMENT: |
+        :warning: **No valid version tag detected!** :warning:
+        Pull Requests to main **must** include a line on their body like `Tags x.y.z`, for tagging the version when merging.
+
+    steps:
+      - name: Extract tag from PR
+        id: extract-tag
+        uses: David-Lor/action-tag-on-pr-merge@feature/validation
+        with:
+          push-tag: false
+          pr-sha: ${{ github.event.pull_request.head.sha }}
+
+      - name: Find latest old fail comment
+        id: last-fail-comment
+        continue-on-error: true
+        uses: sandeshjangam/comment-actions@v1
+        with:
+          type: find
+          number: ${{ github.event.pull_request.number }}
+          search_term: ${{ env.NOTAG_COMMENT }}
+          direction: newer
+
+      - name: Delete latest old fail comment
+        if: ${{ steps.last-fail-comment.outputs.comment_id != '' }}
+        continue-on-error: true
+        uses: sandeshjangam/comment-actions@v1
+        with:
+          type: delete
+          comment_id: ${{ steps.last-fail-comment.outputs.comment_id }}
+
+      - name: Comment if not tag supplied
+        if: ${{ steps.extract-tag.outputs.tag == '' }}
+        continue-on-error: true
+        uses: sandeshjangam/comment-actions@v1
+        with:
+          type: create
+          number: ${{ github.event.pull_request.number }}
+          body: ${{ env.NOTAG_COMMENT }}
+
+      - name: Verify detected tag
+        run: |
+          TAG="${{ steps.extract-tag.outputs.tag }}"
+          test "$TAG" && echo "::notice title=Detected tag::$TAG" || { echo "::error title=No detected tag::Pull Request body does not have a Tag"; exit 1; }
