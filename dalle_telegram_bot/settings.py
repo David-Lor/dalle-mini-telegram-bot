@@ -9,6 +9,9 @@ class Settings(pydantic.BaseSettings):
     telegram_bot_delete_webhook: bool = False
     telegram_bot_graceful_shutdown: bool = False
     telegram_bot_set_commands: bool = False
+    telegram_bot_ratelimit_retry: bool = True
+    telegram_bot_ratelimit_retry_delay_seconds = 5
+    telegram_bot_ratelimit_retry_timeout_seconds = 120
 
     command_generate_action: str = "typing"
     command_generate_chat_concurrent_limit: int = 3
@@ -31,6 +34,10 @@ class Settings(pydantic.BaseSettings):
     @property
     def dalle_generation_retries_limit(self) -> int:
         return int(self.dalle_generation_timeout_seconds / self.dalle_generation_retry_delay_seconds)
+
+    @property
+    def telegram_bot_ratelimit_retries_limit(self) -> int:
+        return int(self.telegram_bot_ratelimit_retry_timeout_seconds / self.telegram_bot_ratelimit_retry_delay_seconds)
 
     @property
     def dalle_api_request_socks_proxy_for_requests_lib(self) -> Optional[dict]:

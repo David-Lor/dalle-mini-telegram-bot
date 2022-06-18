@@ -5,6 +5,7 @@ import telebot
 from telebot.types import Message, InputMediaPhoto, BotCommand
 
 from . import constants
+from .requester import TelegramBotAPIRequester
 from .chatactions import ActionManager
 from .middlewares import request_middleware, message_request_middleware, RateLimiter
 from ..dalle import Dalle, DalleTemporarilyUnavailableException
@@ -35,6 +36,12 @@ class Bot:
         self._dalle_generate_rate_limiter = RateLimiter(
             limit_per_chat=self._settings.command_generate_chat_concurrent_limit,
         )
+
+        self._requester = None
+        if self._settings.telegram_bot_ratelimit_retry:
+            self._requester = TelegramBotAPIRequester(
+                settings=self._settings,
+            )
 
     def run(self):
         """Run the bot in foreground. Perform initial setup (delete webhook, set commands)"""
