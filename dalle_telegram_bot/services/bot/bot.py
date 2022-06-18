@@ -1,4 +1,5 @@
 import contextlib
+from threading import Thread
 from typing import Optional
 
 import telebot
@@ -18,6 +19,7 @@ class Bot:
     def __init__(self, settings: Settings, dalle: Dalle):
         self._settings = settings
         self._dalle = dalle
+        self._polling_thread = None
 
         self._bot = telebot.TeleBot(
             token=self._settings.telegram_bot_token,
@@ -43,17 +45,29 @@ class Bot:
                 settings=self._settings,
             )
 
-    def run(self):
-        """Run the bot in foreground. Perform initial setup (delete webhook, set commands)"""
-        # TODO Need to pass possible exceptions from run() to the main entrypoint
-        # TODO Run delete_webhook and set_commands from a setup() method?
+    def setup(self):
+        """Perform initial setup (delete webhook, set commands)"""
         if self._settings.telegram_bot_delete_webhook:
             self.delete_webhook()
         if self._settings.telegram_bot_set_commands:
             self.set_commands()
 
+    def start(self):
+        """Run the bot in background, by starting a thread running the `run` method."""
+        if self._polling_thread:
+            return
+
+        self._polling_thread = Thread(
+            target=self.run,
+            name="TelegramBotPolling",
+            daemon=True,
+        )
+        self._polling_thread.start()
+
+    def run(self):
+        """Run the bot in foreground. Perform initial setup (delete webhook, set commands)"""
         logger.info("Running bot with Polling")
-        self._bot.infinity_polling()
+        self._bot.infinity_polling(logger_level=None)
 
     def stop(self, graceful_shutdown: Optional[bool] = None):
         """Stop the bot execution.
