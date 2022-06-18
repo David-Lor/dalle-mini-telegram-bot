@@ -31,7 +31,7 @@ def request_middleware(chat_id: int):
                 if exception_is_bot_blocked_by_user(ex):
                     logger.info("Request completed: Bot blocked by the user")
                     return
-                logger.exception("Request failed", ex)
+                logger.exception("Request failed")
 
         else:
             request_duration = round(time.time() - start, 4)
