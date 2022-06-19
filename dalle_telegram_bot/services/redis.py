@@ -11,12 +11,11 @@ class Redis(AbstractLogger):
         if not self._settings.redis_host:
             return
 
-        self._redis = redis.Redis(
+        self._redis = redis.StrictRedis(
             host=self._settings.redis_host,
             port=self._settings.redis_port,
-            username=self._settings.redis_username,
-            password=self._settings.redis_password,
             db=self._settings.redis_db,
+            **self._get_auth_kwargs(),
         )
 
     def log(self, data: str):
@@ -31,3 +30,11 @@ class Redis(AbstractLogger):
         except Exception:
             # TODO Log errors?
             pass
+
+    def _get_auth_kwargs(self):
+        kwargs = dict()
+        if self._settings.redis_username:
+            kwargs["username"] = self._settings.redis_username
+        if self._settings.redis_password:
+            kwargs["password"] = self._settings.redis_password
+        return kwargs
