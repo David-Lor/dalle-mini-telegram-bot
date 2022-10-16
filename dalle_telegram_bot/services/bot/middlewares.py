@@ -6,6 +6,7 @@ from collections import Counter
 
 import telebot
 from telebot.types import Message
+from telebot.apihelper import ApiTelegramException
 
 from . import constants
 from ...logger import logger
@@ -31,7 +32,12 @@ def request_middleware(chat_id: int):
                 if exception_is_bot_blocked_by_user(ex):
                     logger.info("Request completed: Bot blocked by the user")
                     return
-                logger.exception("Request failed", ex)
+
+                if isinstance(ex, ApiTelegramException):
+                    logger.bind(error_json=ex.result_json).error("Request failed")
+                    return
+
+                logger.exception("Request failed")
 
         else:
             request_duration = round(time.time() - start, 4)

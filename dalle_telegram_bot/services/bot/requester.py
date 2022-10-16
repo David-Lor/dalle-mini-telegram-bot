@@ -69,13 +69,9 @@ class TelegramBotAPIRequester:
             logger.info("Closed TelegramBotAPI request sessions")
 
     def stop_session(self, thread_name: str):
-        # noinspection PyUnusedLocal
-        session = None
         with self._sessions_lock:
-            with contextlib.suppress(KeyError):
-                session = self._sessions.pop(thread_name)
-            with contextlib.suppress(KeyError):
-                self._sessions_last_timestamp.pop(thread_name)
+            session = self._sessions.pop(thread_name, None)
+            self._sessions_last_timestamp.pop(thread_name, None)
 
         if not session:
             return
@@ -103,5 +99,4 @@ class TelegramBotAPIRequester:
 
 
 class TelegramBotAPITooManyRequestsException(Exception):
-    def __init__(self, message):
-        super(message)
+    pass

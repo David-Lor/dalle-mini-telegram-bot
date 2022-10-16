@@ -27,7 +27,7 @@ class ActionManager:
         In all cases, increase the counter for the chat."""
         do_start = False
         with self._chatids_counter_lock:
-            if not self.get_count(chat_id):
+            if self._chatids_counter[chat_id] == 0:
                 do_start = True
             self.increase(chat_id)
 
@@ -40,34 +40,32 @@ class ActionManager:
         Decrease the counter; if just one action was running for the chat, stop it."""
         do_stop = False
         with self._chatids_counter_lock:
-            if self.get_count(chat_id):
-                if not self.decrease(chat_id):
+            if self._chatids_counter[chat_id] != 0:
+                if self.decrease(chat_id) == 0:
                     do_stop = True
 
         if do_stop:
             # run the stop outside the counter lock
             self._stop_action_thread(chat_id)
 
-    def get_count(self, chat_id: int) -> int:
-        """Get current request count for a chat."""
-        return self._chatids_counter[chat_id]
-
     def increase(self, chat_id: int) -> int:
         """Increase the request counter for a chat, and return the new value.
         The counter access should be locked while calling this method."""
         self._chatids_counter[chat_id] += 1
-        return self.get_count(chat_id)
+        return self._chatids_counter[chat_id]
 
     def decrease(self, chat_id: int) -> int:
         """Decrease the request counter for a chat, and return the new value.
         If the new value is 0, remove the referenced that from the Counter.
         The counter access should be locked while calling this method."""
         self._chatids_counter[chat_id] -= 1
-        current = self.get_count(chat_id)
-        if current <= 0:
-            del self._chatids_counter[chat_id]
+
+        current = self._chatids_counter[chat_id]
         if current < 0:
             current = 0
+        if current == 0:
+            del self._chatids_counter[chat_id]
+
         return current
 
     def _start_action_thread(self, chat_id: int):

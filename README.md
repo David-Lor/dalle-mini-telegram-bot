@@ -19,6 +19,11 @@ The bot is deployed here: [https://telegram.me/dalle_mini_bot](https://telegram.
 
 ## Changelog
 
+- v0.2.2
+  - Support Redis authentication
+  - Fixed exceptions not being included on "Request failed" log records
+  - Fixed loguru incompatibility with ApiTelegramException
+  - Ignore errors when pushing logs to Redis
 - v0.2.1
   - Graceful shutdown (configurable; wait until pending requests are completed, while not accepting new requests)
   - Retry Telegram Bot API requests on 'Too Many Requests' error; usage of requests.Session
