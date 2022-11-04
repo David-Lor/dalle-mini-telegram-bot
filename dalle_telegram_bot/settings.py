@@ -31,6 +31,7 @@ class Settings(pydantic.BaseSettings):
     redis_db: int = 0
     redis_username: Optional[str] = None
     redis_password: Optional[str] = None
+    redis_ratelimit_counter_key_prefix: str = "dallemini-telegrambot/ratelimit-counters/"
     redis_logs_queue_name: Optional[str] = None
 
     log_level: str = "INFO"

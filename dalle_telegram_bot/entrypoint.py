@@ -35,6 +35,7 @@ class BotBackend:
         )
         self.bot = Bot(
             settings=self.settings,
+            redis=self.redis,
             dalle=self.dalle,
         )
         logger.debug("App initialized")
