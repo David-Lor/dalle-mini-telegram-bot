@@ -38,6 +38,7 @@ class Bot:
             timeout=self._settings.dalle_generation_timeout_seconds,
         )
         self._dalle_generate_rate_limiter = RateLimiter(
+            settings=self._settings,
             redis=self._redis,
             limit_per_chat=self._settings.command_generate_chat_concurrent_limit,
         )

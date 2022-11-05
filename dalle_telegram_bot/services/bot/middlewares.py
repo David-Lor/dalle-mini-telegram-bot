@@ -9,6 +9,7 @@ from telebot.apihelper import ApiTelegramException
 from . import constants
 from ..redis import Redis
 from ...logger import logger
+from ...settings import Settings
 from ...utils import get_uuid, exception_is_bot_blocked_by_user
 
 
@@ -59,9 +60,9 @@ class RateLimiter:
     and validate whether the request can be performed.
     """
 
-    def __init__(self, redis: Redis, limit_per_chat: int):
+    def __init__(self, settings: Settings, redis: Redis, limit_per_chat: int):
+        self._settings = settings
         self._redis = redis
-        self._redis_client = self._redis.redis
         self._limit_per_chat = limit_per_chat
 
     # TODO Implement Redis locks on increase/decrease
@@ -91,7 +92,7 @@ class RateLimiter:
         If the counter is not set or its value is negative, return 0.
         """
         key = self._get_key(chat_id)
-        read_value = self._redis_client.get(key)
+        read_value = self._redis.get(key)
         value = int(read_value) if read_value else 0
         value = value if value >= 0 else 0
         logger.bind(chat_id=chat_id, redis_key=key, redis_value=read_value, counter_value=value).\
@@ -110,10 +111,10 @@ class RateLimiter:
         with logger.contextualize(chat_id=chat_id, redis_key=key, counter_value=value):
             if value > 0:
                 logger.debug("RateLimiter set value")
-                self._redis_client.set(key, value)
+                self._redis.set(key, value)
             else:
                 logger.debug("RateLimiter delete value")
-                self._redis_client.delete(key)
+                self._redis.delete(key)
 
     def _get_key(self, chat_id: int) -> str:
-        return f"{self._redis.settings.redis_ratelimit_counter_key_prefix}{chat_id}"
+        return f"{self._settings.redis_ratelimit_counter_key_prefix}{chat_id}"

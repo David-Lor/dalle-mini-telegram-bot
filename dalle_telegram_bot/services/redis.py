@@ -2,37 +2,79 @@ import redis
 
 from .logger_abc import AbstractLogger
 from ..settings import Settings
+from ..logger import logger
 
 
 class Redis(AbstractLogger):
-    redis: redis.Redis
+    _redis: redis.Redis
 
     def __init__(self, settings: Settings):
-        self.settings = settings
-        self.redis = redis.StrictRedis(
-            host=self.settings.redis_host,
-            port=self.settings.redis_port,
-            db=self.settings.redis_db,
+        self._settings = settings
+        self._redis = redis.StrictRedis(
+            host=self._settings.redis_host,
+            port=self._settings.redis_port,
+            db=self._settings.redis_db,
             **self._get_auth_kwargs(),
         )
 
     def log(self, data: str):
-        if not self.redis or not self.settings.redis_logs_queue_name:
+        if not self._redis or not self._settings.redis_logs_queue_name:
             return
 
         try:
-            self.redis.rpush(
-                self.settings.redis_logs_queue_name,
+            self._redis.rpush(
+                self._settings.redis_logs_queue_name,
                 data,
             )
         except Exception:
             # TODO Log errors?
             pass
 
+    def set(self, key: str, value, **kwargs):
+        with logger.contextualize(redis_key=key, redis_value=value):
+            logger.trace("Redis SET...")
+
+            try:
+                r = self._redis.set(key, value, **kwargs)
+                logger.bind(redis_result=r).trace("Redis SET OK")
+            except Exception as ex:
+                logger.error("Redis SET failed")
+                raise ex
+
+    def get(self, key: str, default=None):
+        with logger.contextualize(redis_key=key):
+            logger.trace("Redis GET...")
+
+            try:
+                r = self._redis.get(key)
+            except Exception as ex:
+                logger.error("Redis GET failed")
+                raise ex
+
+            if r is not None:
+                logger.bind(redis_result=r).trace("Redis GET OK")
+                r = default
+            else:
+                logger.trace("Redis GET not found")
+
+            return r
+
+    def delete(self, *keys: str) -> int:
+        with logger.contextualize(redis_keys=keys):
+            logger.trace("Redis DELETE...")
+
+            try:
+                r = self._redis.delete(*keys)
+                logger.bind(redis_result=r).trace("Redis DELETE OK")
+                return r
+            except Exception as ex:
+                logger.error("Redis DELETE failed")
+                raise ex
+
     def _get_auth_kwargs(self):
         kwargs = dict()
-        if self.settings.redis_username:
-            kwargs["username"] = self.settings.redis_username
-        if self.settings.redis_password:
-            kwargs["password"] = self.settings.redis_password
+        if self._settings.redis_username:
+            kwargs["username"] = self._settings.redis_username
+        if self._settings.redis_password:
+            kwargs["password"] = self._settings.redis_password
         return kwargs
