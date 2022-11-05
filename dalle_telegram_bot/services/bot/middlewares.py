@@ -85,7 +85,7 @@ class RateLimiter:
         """To be called when a request ends for a chat. Decreases -1 the amount of requests for the chat.
         """
         value = self.get_value(chat_id) - 1
-        self.set_value(chat_id, value - 1)
+        self.set_value(chat_id, value)
 
     def get_value(self, chat_id: int):
         """Get the current amount of requests on the counter for a chat.
