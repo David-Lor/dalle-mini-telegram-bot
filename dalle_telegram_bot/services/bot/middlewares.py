@@ -1,6 +1,7 @@
 import contextlib
 import time
 import threading
+from typing import Optional
 
 import telebot
 from telebot.types import Message
@@ -9,7 +10,6 @@ from telebot.apihelper import ApiTelegramException
 from . import constants
 from ..redis import Redis
 from ...logger import logger
-from ...settings import Settings
 from ...utils import get_uuid, exception_is_bot_blocked_by_user
 
 
@@ -60,10 +60,19 @@ class RateLimiter:
     and validate whether the request can be performed.
     """
 
-    def __init__(self, settings: Settings, redis: Redis, limit_per_chat: int):
-        self._settings = settings
+    def __init__(
+            self,
+            redis: Redis,
+            limit_per_chat: int,
+            redis_key_prefix: str,
+            key_ttl_seconds: Optional[float] = None,
+    ):
         self._redis = redis
         self._limit_per_chat = limit_per_chat
+        self._redis_key_prefix = redis_key_prefix
+        self._key_ttl_milliseconds = None
+        if key_ttl_seconds:
+            self._key_ttl_milliseconds = int(key_ttl_seconds * 1000)
 
     # TODO Implement Redis locks on increase/decrease
 
@@ -111,10 +120,10 @@ class RateLimiter:
         with logger.contextualize(chat_id=chat_id, redis_key=key, counter_value=value):
             if value > 0:
                 logger.debug("RateLimiter set value")
-                self._redis.set(key, value)
+                self._redis.set(key, value, px=self._key_ttl_milliseconds)
             else:
                 logger.debug("RateLimiter delete value")
                 self._redis.delete(key)
 
     def _get_key(self, chat_id: int) -> str:
-        return f"{self._settings.redis_ratelimit_counter_key_prefix}{chat_id}"
+        return f"{self._redis_key_prefix}{chat_id}"

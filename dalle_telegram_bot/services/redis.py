@@ -31,7 +31,7 @@ class Redis(AbstractLogger):
             pass
 
     def set(self, key: str, value, **kwargs):
-        with logger.contextualize(redis_key=key, redis_value=value):
+        with logger.contextualize(redis_key=key, redis_value=value, redis_set_kwargs=kwargs):
             logger.trace("Redis SET...")
 
             try:
