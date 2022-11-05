@@ -53,9 +53,9 @@ class Redis(AbstractLogger):
 
             if r is not None:
                 logger.bind(redis_result=r).trace("Redis GET OK")
-                r = default
             else:
                 logger.trace("Redis GET not found")
+                r = default
 
             return r
 
