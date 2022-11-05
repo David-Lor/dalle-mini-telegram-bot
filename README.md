@@ -19,6 +19,9 @@ The bot is deployed here: [https://telegram.me/dalle_mini_bot](https://telegram.
 
 ## Changelog
 
+- v0.3.1
+  - **(Breaking)** Redis is now required
+  - Use Redis for RateLimiter counters (this allows sharing counters between bot instances)
 - v0.2.2
   - Support Redis authentication
   - Fixed exceptions not being included on "Request failed" log records
