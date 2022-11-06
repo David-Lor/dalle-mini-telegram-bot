@@ -18,14 +18,13 @@ class Redis(AbstractLogger):
         )
 
     def log(self, data: str):
-        if not self._redis or not self._settings.redis_logs_queue_name:
+        queue_name = self._settings.redis_logs_queue_name
+        if not self._redis or not queue_name:
             return
 
+        # noinspection PyBroadException
         try:
-            self._redis.rpush(
-                self._settings.redis_logs_queue_name,
-                data,
-            )
+            self._redis.rpush(queue_name, data)
         except Exception:
             # TODO Log errors?
             pass

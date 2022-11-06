@@ -3,6 +3,7 @@ from threading import Event, Lock
 
 from .services.bot import Bot
 from .services.dalle import Dalle
+from .services.mqtt import Mqtt
 from .services.redis import Redis
 from .settings import Settings
 from .logger import logger, setup_logger
@@ -11,6 +12,7 @@ from .logger import logger, setup_logger
 class BotBackend:
     settings: Settings
     redis: Redis
+    mqtt: Mqtt
     dalle: Dalle
     bot: Bot
     _teardown_event: Event
@@ -24,9 +26,14 @@ class BotBackend:
         self.redis = Redis(
             settings=self.settings,
         )
+        self.mqtt = Mqtt(
+            settings=self.settings,
+        )
+        self.mqtt.setup()
+
         setup_logger(
             settings=self.settings,
-            loggers=[self.redis],
+            loggers=[self.redis, self.mqtt],
         )
         logger.debug("Initializing app...")
 

@@ -35,6 +35,11 @@ class Settings(pydantic.BaseSettings):
         "dallemini-telegrambot/ratelimit-counters/command-generate/"
     redis_logs_queue_name: Optional[str] = None
 
+    mqtt_host: Optional[str] = None
+    mqtt_port: int = 1883
+    mqtt_logs_topic_name: Optional[str] = None
+    mqtt_logs_qos: int = 0
+
     log_level: str = "INFO"
 
     @property
