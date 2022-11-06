@@ -19,7 +19,7 @@ from ...logger import logger
 class Bot:
     def __init__(self, settings: Settings, redis: Redis, dalle: Dalle):
         self._settings = settings
-        self._redis= redis
+        self._redis = redis
         self._dalle = dalle
         self._polling_thread = None
 

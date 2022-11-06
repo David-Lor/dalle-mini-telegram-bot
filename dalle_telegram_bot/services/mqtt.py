@@ -4,6 +4,7 @@ import paho.mqtt.client as mqtt
 
 from .common import Setupable
 from .logger_abc import AbstractLogger
+from ..logger import logger
 from ..settings import Settings
 
 
@@ -17,17 +18,25 @@ class Mqtt(Setupable, AbstractLogger):
             self._mqtt = mqtt.Client()
 
     def setup(self):
-        if self._mqtt:
-            self._mqtt.connect(
-                host=self._settings.mqtt_host,
-                port=self._settings.mqtt_port,
-            )
-            self._mqtt.loop_start()
+        if not self._mqtt:
+            return
+
+        logger.debug("Initializing MQTT...")
+        self._mqtt.connect(
+            host=self._settings.mqtt_host,
+            port=self._settings.mqtt_port,
+        )
+        self._mqtt.loop_start()
+        logger.debug("MQTT initialized")
 
     def teardown(self):
-        if self._mqtt:
-            self._mqtt.loop_stop()
-            self._mqtt.disconnect()
+        if not self._mqtt:
+            return
+
+        logger.debug("Closing MQTT...")
+        self._mqtt.loop_stop()
+        self._mqtt.disconnect()
+        logger.debug("MQTT closed")
 
     def log(self, data: str):
         topic = self._settings.mqtt_logs_topic_name

@@ -19,10 +19,12 @@ class Redis(Setupable, AbstractLogger):
         )
 
     def setup(self):
-        pass
+        logger.debug("Redis initialized")
 
     def teardown(self):
+        logger.debug("Closing Redis...")
         self._redis.close()
+        logger.debug("Redis closed")
 
     def log(self, data: str):
         queue_name = self._settings.redis_logs_queue_name
