@@ -1,7 +1,10 @@
+import contextlib
 import signal
 from threading import Event, Lock
+from typing import List
 
 from .services.bot import Bot
+from .services.common import Setupable
 from .services.dalle import Dalle
 from .services.mqtt import Mqtt
 from .services.redis import Redis
@@ -15,6 +18,7 @@ class BotBackend:
     mqtt: Mqtt
     dalle: Dalle
     bot: Bot
+    _teardownable_services: List[Setupable]
     _teardown_event: Event
     _teardown_lock: Lock
 
@@ -22,14 +26,19 @@ class BotBackend:
         self.settings = Settings()
         self._teardown_event = Event()
         self._teardown_lock = Lock()
+        self._teardownable_services = list()
 
         self.redis = Redis(
             settings=self.settings,
         )
+        self.redis.setup()
+        self._teardownable_services.append(self.redis)
+
         self.mqtt = Mqtt(
             settings=self.settings,
         )
         self.mqtt.setup()
+        self._teardownable_services.append(self.mqtt)
 
         setup_logger(
             settings=self.settings,
@@ -63,9 +72,13 @@ class BotBackend:
                 return
 
             try:
-                self.stop()
+                for fn in [self.stop, *[service.teardown for service in self._teardownable_services]]:
+                    with contextlib.suppress(Exception):
+                        fn()
             finally:
                 self._teardown_event.set()
+
+    # TODO Avoid or rename start/stop methods to avoid confusion with setup/teardown
 
     def start(self):
         logger.debug("Running app...")

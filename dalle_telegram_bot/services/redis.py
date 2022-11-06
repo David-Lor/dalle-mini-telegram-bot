@@ -1,11 +1,12 @@
 import redis
 
+from .common import Setupable
 from .logger_abc import AbstractLogger
 from ..settings import Settings
 from ..logger import logger
 
 
-class Redis(AbstractLogger):
+class Redis(Setupable, AbstractLogger):
     _redis: redis.Redis
 
     def __init__(self, settings: Settings):
@@ -16,6 +17,12 @@ class Redis(AbstractLogger):
             db=self._settings.redis_db,
             **self._get_auth_kwargs(),
         )
+
+    def setup(self):
+        pass
+
+    def teardown(self):
+        self._redis.close()
 
     def log(self, data: str):
         queue_name = self._settings.redis_logs_queue_name
