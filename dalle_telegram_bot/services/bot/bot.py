@@ -11,13 +11,15 @@ from .chatactions import ActionManager
 from .middlewares import request_middleware, message_request_middleware, RateLimiter
 from ..dalle import Dalle, DalleTemporarilyUnavailableException
 from ..dalle.models import DalleResponse
+from ..redis import Redis
 from ...settings import Settings
 from ...logger import logger
 
 
 class Bot:
-    def __init__(self, settings: Settings, dalle: Dalle):
+    def __init__(self, settings: Settings, redis: Redis, dalle: Dalle):
         self._settings = settings
+        self._redis= redis
         self._dalle = dalle
         self._polling_thread = None
 
@@ -36,7 +38,10 @@ class Bot:
             timeout=self._settings.dalle_generation_timeout_seconds,
         )
         self._dalle_generate_rate_limiter = RateLimiter(
+            redis=self._redis,
             limit_per_chat=self._settings.command_generate_chat_concurrent_limit,
+            redis_key_prefix=self._settings.redis_command_generate_chat_concurrent_key_prefix,
+            key_ttl_seconds=self._settings.dalle_generation_timeout_seconds * 2,
         )
 
         self._requester = None

@@ -26,11 +26,13 @@ class Settings(pydantic.BaseSettings):
     dalle_generation_timeout_seconds: float = 6 * 60
     dalle_generation_retry_delay_seconds: float = 5
 
-    redis_host: Optional[str] = None
+    redis_host: str
     redis_port: int = 6379
     redis_db: int = 0
     redis_username: Optional[str] = None
     redis_password: Optional[str] = None
+    redis_command_generate_chat_concurrent_key_prefix: str = \
+        "dallemini-telegrambot/ratelimit-counters/command-generate/"
     redis_logs_queue_name: Optional[str] = None
 
     log_level: str = "INFO"
