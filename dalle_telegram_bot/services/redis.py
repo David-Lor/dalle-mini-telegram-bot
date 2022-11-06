@@ -84,5 +84,5 @@ class Redis(Setupable, AbstractLogger):
         if self._settings.redis_username:
             kwargs["username"] = self._settings.redis_username
         if self._settings.redis_password:
-            kwargs["password"] = self._settings.redis_password
+            kwargs["password"] = self._settings.redis_password.get_secret_value()
         return kwargs

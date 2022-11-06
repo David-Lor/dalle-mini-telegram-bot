@@ -30,7 +30,7 @@ class Settings(pydantic.BaseSettings):
     redis_port: int = 6379
     redis_db: int = 0
     redis_username: Optional[str] = None
-    redis_password: Optional[str] = None
+    redis_password: Optional[pydantic.SecretStr] = None
     redis_command_generate_chat_concurrent_key_prefix: str = \
         "dallemini-telegrambot/ratelimit-counters/command-generate/"
     redis_logs_queue_name: Optional[str] = None
