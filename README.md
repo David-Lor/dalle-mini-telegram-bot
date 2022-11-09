@@ -22,6 +22,9 @@ The bot is deployed here: [https://telegram.me/dalle_mini_bot](https://telegram.
 - v..
   - **(Breaking)** Redis is now required
   - Use Redis for RateLimiter counters (this allows sharing counters between bot instances)
+  - Add MQTT integration for sending logs to MQTT topic
+  - Close Redis connection on teardown
+  - Set Redis password as pydantic.SecretStr on settings model
 - v0.2.2
   - Support Redis authentication
   - Fixed exceptions not being included on "Request failed" log records

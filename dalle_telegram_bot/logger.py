@@ -25,7 +25,7 @@ def setup_logger(settings: Settings, loggers: Collection[AbstractLogger]):
     for custom_logger in (loggers or []):
         logger.add(
             custom_logger.log,
-            level="TRACE",
+            level="TRACE",  # TODO parametrize
             enqueue=True,
             serialize=True,  # record provided as JSON string to the handler
         )
