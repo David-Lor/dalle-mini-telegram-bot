@@ -14,6 +14,7 @@ class Settings(pydantic.BaseSettings):
     telegram_bot_ratelimit_retry: bool = True
     telegram_bot_ratelimit_retry_delay_seconds: float = 5
     telegram_bot_ratelimit_retry_timeout_seconds: float = 120
+    telegram_bot_api_url: str = "https://api.telegram.org"
 
     command_generate_action: str = "typing"
     command_generate_chat_concurrent_limit: int = 3

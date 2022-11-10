@@ -3,6 +3,7 @@ from threading import Thread
 from typing import Optional
 
 import telebot
+import telebot.apihelper
 from telebot.types import Message, InputMediaPhoto, BotCommand
 
 from . import constants
@@ -49,6 +50,8 @@ class Bot:
             self._requester = TelegramBotAPIRequester(
                 settings=self._settings,
             )
+
+        telebot.apihelper.API_URL = self._settings.telegram_bot_api_url + "/bot{0}/{1}"
 
     def setup(self):
         """Perform initial setup (delete webhook, set commands)"""
