@@ -1,6 +1,7 @@
 from typing import Optional
 
 import pydantic
+import urljoin
 
 
 class Settings(pydantic.BaseSettings):
@@ -15,6 +16,14 @@ class Settings(pydantic.BaseSettings):
     telegram_bot_ratelimit_retry_delay_seconds: float = 5
     telegram_bot_ratelimit_retry_timeout_seconds: float = 120
     telegram_bot_api_url: str = "https://api.telegram.org"
+
+    telegram_bot_webhook_baseurl: Optional[str] = None
+    telegram_bot_webhook_endpoint: str = "/telegram/webhook"
+    telegram_bot_webhook_fullurl: Optional[str] = None
+    telegram_bot_webhook_host: str = "0.0.0.0"
+    telegram_bot_webhook_port: int = 8080
+    telegram_bot_webhook_ssl_cert: Optional[str] = None
+    telegram_bot_webhook_ssl_key: Optional[str] = None
 
     command_generate_action: str = "typing"
     command_generate_chat_concurrent_limit: int = 3
@@ -60,6 +69,20 @@ class Settings(pydantic.BaseSettings):
             http=proxy,
             https=proxy,
         )
+
+    @property
+    def is_webhook(self) -> bool:
+        return bool(self.telegram_bot_webhook_baseurl)
+
+    @property
+    def is_webhook_ssl(self) -> bool:
+        return bool(self.telegram_bot_webhook_ssl_cert) and bool(self.telegram_bot_webhook_ssl_key)
+
+    @property
+    def webhook_url(self) -> str:
+        if self.telegram_bot_webhook_fullurl:
+            return self.telegram_bot_webhook_fullurl
+        return urljoin.url_path_join(self.telegram_bot_webhook_baseurl, self.telegram_bot_webhook_endpoint)
 
     class Config:
         env_file = ".env"
