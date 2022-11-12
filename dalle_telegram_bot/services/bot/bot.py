@@ -109,6 +109,9 @@ class Bot:
         ssl_context = None
         if self._settings.is_webhook_ssl:
             ssl_context = (self._settings.telegram_bot_webhook_ssl_cert, self._settings.telegram_bot_webhook_ssl_key)
+            logger.info("Running bot using Webhook (SSL)")
+        else:
+            logger.info("Running bot using Webhook (not SSL)")
 
         self._webhook_server_app.run(
             host=self._settings.telegram_bot_webhook_host,
