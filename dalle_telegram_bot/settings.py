@@ -44,6 +44,7 @@ class Settings(pydantic.BaseSettings):
     redis_command_generate_chat_concurrent_key_prefix: str = \
         "dallemini-telegrambot/ratelimit-counters/command-generate/"
     redis_logs_queue_name: Optional[str] = None
+    redis_telegram_updates_queue_name: Optional[str] = None
 
     mqtt_host: Optional[str] = None
     mqtt_port: int = 1883
@@ -77,6 +78,10 @@ class Settings(pydantic.BaseSettings):
     @property
     def is_webhook_ssl(self) -> bool:
         return bool(self.telegram_bot_webhook_ssl_cert) and bool(self.telegram_bot_webhook_ssl_key)
+
+    @property
+    def is_redis(self) -> bool:
+        return bool(self.redis_telegram_updates_queue_name)
 
     @property
     def webhook_url(self) -> str:

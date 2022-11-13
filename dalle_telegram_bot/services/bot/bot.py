@@ -56,7 +56,7 @@ class Bot:
         telebot.apihelper.API_URL = self._settings.telegram_bot_api_url + "/bot{0}/{1}"
 
     def setup(self):
-        """Perform initial setup (delete webhook, set commands)"""
+        """Perform initial setup (delete webhook, set commands, set webhook...)."""
         if self._settings.telegram_bot_delete_webhook:
             self.delete_webhook()
         if self._settings.telegram_bot_set_commands:
@@ -83,6 +83,8 @@ class Bot:
         """Run the bot in foreground, on the mode configured."""
         if self._settings.is_webhook:
             return self.run_webhook()
+        if self._settings.is_redis:
+            return self.run_redis()
         return self.run_polling()
 
     def stop(self, graceful_shutdown: Optional[bool] = None):
@@ -118,6 +120,11 @@ class Bot:
             port=self._settings.telegram_bot_webhook_port,
             ssl_context=ssl_context,
         )
+
+    def run_redis(self):
+        logger.info("Running bot using Redis")
+        for update in self._redis.watch_generator(self._settings.redis_telegram_updates_queue_name):
+            self._bot.process_new_updates([telebot.types.Update.de_json(update)])
 
     def setup_webhook(self):
         app = flask.Flask("dallemini-telegrambot")

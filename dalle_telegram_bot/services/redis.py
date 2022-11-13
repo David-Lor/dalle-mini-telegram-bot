@@ -79,6 +79,16 @@ class Redis(Setupable, AbstractLogger):
                 logger.error("Redis DELETE failed")
                 raise ex
 
+    def watch_generator(self, key: str):
+        logger.bind(redis_key=key).info("Redis BLPOP (watching key)...")
+        while True:
+            data = self._redis.blpop(key)[1]
+            try:
+                data = data.decode()
+                yield data
+            except AttributeError:
+                logger.bind(read_data=data).warning("Invalid data received in Redis queue")
+
     def _get_auth_kwargs(self):
         kwargs = dict()
         if self._settings.redis_username:
