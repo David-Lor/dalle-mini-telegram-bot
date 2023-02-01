@@ -2,7 +2,9 @@ import contextlib
 from threading import Thread
 from typing import Optional
 
+import flask
 import telebot
+import telebot.apihelper
 from telebot.types import Message, InputMediaPhoto, BotCommand
 
 from . import constants
@@ -11,15 +13,18 @@ from .chatactions import ActionManager
 from .middlewares import request_middleware, message_request_middleware, RateLimiter
 from ..dalle import Dalle, DalleTemporarilyUnavailableException
 from ..dalle.models import DalleResponse
+from ..redis import Redis
 from ...settings import Settings
 from ...logger import logger
 
 
 class Bot:
-    def __init__(self, settings: Settings, dalle: Dalle):
+    def __init__(self, settings: Settings, redis: Redis, dalle: Dalle):
         self._settings = settings
+        self._redis = redis
         self._dalle = dalle
         self._polling_thread = None
+        self._webhook_server_app = None
 
         self._bot = telebot.TeleBot(
             token=self._settings.telegram_bot_token,
@@ -36,7 +41,10 @@ class Bot:
             timeout=self._settings.dalle_generation_timeout_seconds,
         )
         self._dalle_generate_rate_limiter = RateLimiter(
+            redis=self._redis,
             limit_per_chat=self._settings.command_generate_chat_concurrent_limit,
+            redis_key_prefix=self._settings.redis_command_generate_chat_concurrent_key_prefix,
+            key_ttl_seconds=self._settings.dalle_generation_timeout_seconds * 2,
         )
 
         self._requester = None
@@ -45,12 +53,16 @@ class Bot:
                 settings=self._settings,
             )
 
+        telebot.apihelper.API_URL = self._settings.telegram_bot_api_url + "/bot{0}/{1}"
+
     def setup(self):
         """Perform initial setup (delete webhook, set commands)"""
         if self._settings.telegram_bot_delete_webhook:
             self.delete_webhook()
         if self._settings.telegram_bot_set_commands:
             self.set_commands()
+        if self._settings.is_webhook:
+            self.setup_webhook()
 
     def start(self):
         """Run the bot in background, by starting a thread running the `run` method."""
@@ -68,9 +80,10 @@ class Bot:
         self._polling_thread.start()
 
     def run(self):
-        """Run the bot in foreground. Perform initial setup (delete webhook, set commands)"""
-        logger.info("Running bot with Polling")
-        self._bot.infinity_polling(logger_level=None)
+        """Run the bot in foreground, on the mode configured."""
+        if self._settings.is_webhook:
+            return self.run_webhook()
+        return self.run_polling()
 
     def stop(self, graceful_shutdown: Optional[bool] = None):
         """Stop the bot execution.
@@ -87,6 +100,40 @@ class Bot:
 
         if self._requester:
             self._requester.teardown()
+
+    def run_polling(self):
+        logger.info("Running bot with Polling")
+        self._bot.infinity_polling(logger_level=None)
+
+    def run_webhook(self):
+        ssl_context = None
+        if self._settings.is_webhook_ssl:
+            ssl_context = (self._settings.telegram_bot_webhook_ssl_cert, self._settings.telegram_bot_webhook_ssl_key)
+
+        self._webhook_server_app.run(
+            host=self._settings.telegram_bot_webhook_host,
+            port=self._settings.telegram_bot_webhook_port,
+            ssl_context=ssl_context,
+        )
+
+    def setup_webhook(self):
+        app = flask.Flask("dallemini-telegrambot")
+        self._webhook_server_app = app
+
+        certificate_file = None
+        if self._settings.is_webhook_ssl:
+            certificate_file = open(self._settings.telegram_bot_webhook_ssl_cert, "r")
+
+        try:
+            app.post(self._settings.telegram_bot_webhook_endpoint)(self._webhook_request_handler)
+            self._bot.set_webhook(
+                url=self._settings.webhook_url,
+                certificate=certificate_file,
+            )
+
+        finally:
+            if certificate_file:
+                certificate_file.close()
 
     def set_commands(self):
         logger.debug("Setting bot commands...")
@@ -111,6 +158,15 @@ class Bot:
         # stop_bot() waits for remaining requests to complete
         self._bot.stop_bot()
         logger.info("Bot stopped")
+
+    def _webhook_request_handler(self):
+        if flask.request.headers.get('content-type') != 'application/json':
+            flask.abort(403)
+
+        json_string = flask.request.get_data().decode('utf-8')
+        update = telebot.types.Update.de_json(json_string)
+        self._bot.process_new_updates([update])
+        return ''
 
     def _handler_message_entrypoint(self, message: Message):
         with request_middleware(chat_id=message.chat.id):

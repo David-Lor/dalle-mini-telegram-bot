@@ -5,5 +5,8 @@ pysocks==1.7.1
 shortuuid==1.0.9
 wait4it==0.2.1
 redis==4.3.3
+paho-mqtt==1.6.1
+flask==2.2.2
+urljoin==1.0.0
 loguru==0.6.0
 python-dotenv==0.20.0
